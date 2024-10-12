@@ -84,7 +84,7 @@ if __name__ == "__main__":
             split_res = split_tree(soup, max_node_words=max_node_words)
             path_tags = [res[0] for res in split_res]
             paths = [res[1] for res in split_res]
-            path_divisible = [res[2] for res in split_res]
+            is_leaf = [res[2] for res in split_res]
             question = query_instruction_for_retrieval + data_lines[nidx]['question']
 
             node_docs = []
@@ -110,7 +110,7 @@ if __name__ == "__main__":
             # trim html according to path_rankings
             max_context_window = int(context_window[:-1]) * 1000
 
-            paths = [{"path": paths[i], "divisible": path_divisible[i]} for i in range(len(paths))]
+            paths = [{"path": paths[i], "divisible": is_leaf[i]} for i in range(len(paths))]
             for idj in range(len(paths)):
                 path_idx = int(path_rankings[idj])
                 paths[path_idx]["ranking"] = idj
@@ -168,7 +168,7 @@ if __name__ == "__main__":
             data_lines[nidx]["html_trim"] = html_trim
             data_lines[nidx]["html"] = str(soup)
             data_lines[nidx]["paths"] = [p["path"] for p in paths]
-            data_lines[nidx]["path_divisible"] = path_divisible
+            data_lines[nidx]["is_leaf"] = is_leaf
 
 
     with open(output_file, "w") as f:

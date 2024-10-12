@@ -6,116 +6,16 @@ import pathlib
 import re
 
 from langchain_community.embeddings import BaichuanTextEmbeddings, HuggingFaceHubEmbeddings
+from langchain_community.retrievers import BM25Retriever
 from langchain_community.vectorstores import FAISS
 from tqdm import tqdm
-from typing import AsyncIterator, Iterator, List, Dict, Optional, Any, cast
-from langchain_core.documents import Document
-from langchain_text_splitters import HTMLSectionSplitter
+from typing import List
+import sys
 
-headers_to_split_on = [
-    ("h1", "Header 1"),
-    ("h2", "Header 2"),
-    ("h3", "Header 3"),
-    ("h4", "Header 4"),
-    ("body", "Body"),
-]
+from transformers import AutoTokenizer
 
-
-class HTMLSplitter(HTMLSectionSplitter):
-    def split_html_by_headers(
-            self, html_doc: str
-    ) -> List[Dict[str, Optional[str]]]:
-        try:
-            from bs4 import BeautifulSoup, PageElement  # type: ignore[import-untyped]
-        except ImportError as e:
-            raise ImportError(
-                "Unable to import BeautifulSoup/PageElement, \
-                    please install with `pip install \
-                    bs4`."
-            ) from e
-
-        soup = BeautifulSoup(html_doc, "html.parser")
-        headers = list(self.headers_to_split_on.keys())
-        sections = []
-
-        headers = soup.find_all(["body"] + headers)
-
-        for i, header in enumerate(headers):
-            header_element: PageElement = header
-            if i == 0:
-                current_header = "#TITLE#"
-                current_header_tag = "h1"
-                section_content: List = []
-            else:
-                current_header = header_element.text.strip()
-                current_header_tag = header_element.name
-                section_content = []
-            for element in header_element.next_elements:
-                if i + 1 < len(headers) and element == headers[i + 1]:
-                    break
-                if isinstance(element, str):
-                    section_content.append(element)
-            content = " ".join(section_content).strip()
-
-            if content != "":
-                sections.append({
-                    "header": current_header,
-                    "content": content,
-                    "tag_name": current_header_tag,
-                })
-
-        return sections
-
-    def split_text_from_file(self, file: Any) -> List[Document]:
-        """Split HTML file
-
-        Args:
-            file: HTML file
-        """
-        file_content = file.getvalue()
-        file_content = self.convert_possible_tags_to_header(file_content)
-        sections = self.split_html_by_headers(file_content)
-
-        return [
-            Document(
-                cast(str, section["content"]),
-                metadata={
-                    self.headers_to_split_on[
-                        str(section["tag_name"])
-                    ]: section["header"]
-                },
-            )
-            for section in sections
-        ]
-
-    def convert_possible_tags_to_header(self, html_content: str) -> str:
-        if self.xslt_path is None:
-            return html_content
-
-        try:
-            from lxml import etree
-        except ImportError as e:
-            raise ImportError(
-                "Unable to import lxml, please install with `pip install lxml`."
-            ) from e
-        # use lxml library to parse html document and return xml ElementTree
-        parser = etree.HTMLParser()
-        try:
-            tree = etree.fromstring(html_content, parser)
-        except:
-            open("error_html.html", "w").write(html_content)
-
-        # document transformation for "structure-aware" chunking is handled with xsl.
-        # this is needed for htmls files that using different font sizes and layouts
-        # check to see if self.xslt_path is a relative path or absolute path
-        if not os.path.isabs(self.xslt_path):
-            xslt_path = pathlib.Path(__file__).parent / self.xslt_path
-
-        xslt_tree = etree.parse("html4rag/converting_to_header.xslt")
-        transform = etree.XSLT(xslt_tree)
-        result = transform(tree)
-        return str(result)
-
+sys.path.append("./")
+from html4rag.html_utils import HTMLSplitter, headers_to_split_on, clean_xml
 
 html_splitter = HTMLSplitter(headers_to_split_on=headers_to_split_on)
 
@@ -128,9 +28,10 @@ class TEIEmbeddings(HuggingFaceHubEmbeddings):
         for i in range(len(texts)):
             text = texts[i]
             words = text.split(" ")
-            if len(words) > 1024:
-                text = " ".join(words[:1024])
-                texts[i] = text
+            if len(words) > 1024 or len(text) > 1024:
+                tokens = tokenizer.encode(text, add_special_tokens=False)
+                tokens = tokens[:4096]
+                texts[i] = tokenizer.decode(tokens)
 
         _model_kwargs = self.model_kwargs or {}
         try:
@@ -168,17 +69,8 @@ class VLLMEmbeddings(HuggingFaceHubEmbeddings):
         return json.loads(responses.decode())
 
 
-def clean_xml(html):
-    # remove tags starts with <?xml
-    html = re.sub(r"<\?xml.*?>", "", html)
-    # remove tags starts with <!DOCTYPE
-    html = re.sub(r"<!DOCTYPE.*?>", "", html)
-    return html
-
-
 if __name__ == "__main__":
     argparser = argparse.ArgumentParser()
-    argparser.add_argument("--chat_model", type=str, default="bc33b192k")
     argparser.add_argument("--dataset", type=str, default="wstqa")
     argparser.add_argument("--split", type=str, default="test")
     argparser.add_argument("--search_engine", type=str, default="bing")
@@ -188,7 +80,6 @@ if __name__ == "__main__":
     argparser.add_argument("--rewrite_method", type=str, default="slimplmqr")
     args = argparser.parse_args()
 
-    chat_model = args.chat_model
     dataset = args.dataset
     split = args.split
     search_engine = args.search_engine
@@ -215,8 +106,18 @@ if __name__ == "__main__":
             model=url,
             huggingfacehub_api_token="a-default-token",
             model_kwargs={"truncate": True})
+    elif rerank_model == "e5-mistral":
+        embedder = TEIEmbeddings(
+            model=url,
+            huggingfacehub_api_token="a-default-token",
+            model_kwargs={"truncate": True})
+    elif rerank_model == "bm25":
+        embedder = None
     else:
         raise NotImplementedError(f"rerank model {rerank_model} not implemented")
+
+    tokenizer_path = "../../huggingface/e5-mistral-7b-instruct"
+    tokenizer = AutoTokenizer.from_pretrained(tokenizer_path, trust_remote_code=True)
 
     assert search_engine == "" or corpus == "", "search_engine and corpus cannot be both set"
     if search_engine in ["bing", "google"]:
@@ -237,14 +138,21 @@ if __name__ == "__main__":
     else:
         raise NotImplementedError(f"search engine {search_engine} not implemented")
 
-    query_instruction_for_retrieval = "Represent this sentence for searching relevant passages: "
+    if rerank_model == "bgelargeen":
+        query_instruction_for_retrieval = "Represent this sentence for searching relevant passages: "
+    elif rerank_model == "e5-mistral":
+        query_instruction_for_retrieval = "Instruct: Given a web search query, retrieve relevant passages that answer the query\nQuery: "
+    elif rerank_model == "bm25":
+        query_instruction_for_retrieval = ""
+    else:
+        raise NotImplementedError(f"rerank model {rerank_model} not implemented")
 
     print(f"input_file: {input_file}")
     data_lines = [json.loads(l) for l in open(input_file)]
 
     if args.mini_dataset:
         data_lines = data_lines[:10]
-    with concurrent.futures.ThreadPoolExecutor(max_workers=32) as executor:
+    with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
         for idx, data_line in tqdm(enumerate(data_lines), total=len(data_lines)):
             question = query_instruction_for_retrieval + data_line["question"]
             docs = []
@@ -260,27 +168,30 @@ if __name__ == "__main__":
             for i, doc in enumerate(docs):
                 doc.metadata["html_index"] = html_indexes[i]
                 doc.metadata["chunk_index"] = i
-            batch_size = 16
-            # print(f"indexing {len(docs)} chunks")
-            try:
-                future = executor.submit(FAISS.from_documents, docs[:batch_size], embedder)
-                db = future.result()
-                for doc_batch_idx in range(batch_size, len(docs), batch_size):
-                    # db.add_documents(docs[doc_batch_idx:doc_batch_idx + 16])
-                    future = executor.submit(db.add_documents, docs[doc_batch_idx:doc_batch_idx + batch_size])
-                    future.result()
-            except Exception as e:
-                print(f"batch size {batch_size} failed, try batch size 1")
-                future = executor.submit(FAISS.from_documents, docs[:1], embedder)
-                db = future.result()
-                for doc_batch_idx in range(1, len(docs)):
-                    # db.add_documents(docs[doc_batch_idx:doc_batch_idx + 4])
-                    future = executor.submit(db.add_documents, docs[doc_batch_idx:doc_batch_idx + 1])
-                    future.result()
+            if embedder is None:
+                retriever=BM25Retriever.from_documents(docs)
+            else:
+                batch_size = 256
+                # print(f"indexing {len(docs)} chunks")
+                try:
+                    future = executor.submit(FAISS.from_documents, docs[:batch_size], embedder)
+                    db = future.result()
+                    for doc_batch_idx in range(batch_size, len(docs), batch_size):
+                        # db.add_documents(docs[doc_batch_idx:doc_batch_idx + 16])
+                        future = executor.submit(db.add_documents, docs[doc_batch_idx:doc_batch_idx + batch_size])
+                        future.result()
+                except Exception as e:
+                    print(f"batch size {batch_size} failed, try batch size 1")
+                    future = executor.submit(FAISS.from_documents, docs[:1], embedder)
+                    db = future.result()
+                    for doc_batch_idx in range(1, len(docs)):
+                        # db.add_documents(docs[doc_batch_idx:doc_batch_idx + 4])
+                        future = executor.submit(db.add_documents, docs[doc_batch_idx:doc_batch_idx + 1])
+                        future.result()
 
-            retriever = db.as_retriever(search_kwargs={"k": len(docs)})
-            # print(f"indexed {len(docs)} chunks")
-            # rerank page contents
+                retriever = db.as_retriever(search_kwargs={"k": len(docs)})
+                # print(f"indexed {len(docs)} chunks")
+                # rerank page contents
 
             # ranked_docs = retriever.invoke(question)
             future = executor.submit(retriever.invoke, question)

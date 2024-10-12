@@ -15,6 +15,8 @@ import loguru
 
 from tqdm import tqdm
 
+from html4rag.html2json import input_html
+
 rouge = evaluate.load("./evaluate_utils/rouge/")
 dataset_start_id = {"asqa": 1000, "hotpot-qa": 2000, "nq": 3000, "trivia-qa": 4000, "musique": 5000}
 input_prompt = "**HTML**: ```{input_html}```\n**Question**: **{question}**\n Your task is to identify the most relevant text piece to the given question in the HTML document. This text piece could either be a direct paraphrase to the fact, or a supporting evidence that can be used to infer the fact. The overall length of the text piece should be more than 300 words and less than 500 words. You should provide the path to the text piece in the HTML document. An example for the output is: <html 1><body><div 2><p>Some key information..."
@@ -65,17 +67,17 @@ def calculate_short_answer_EM(generated_answer, gold_answers, language="en"):
     }
 
 
-def get_best_tree(htmls, answer):
+def get_best_tree(htmls, answer, max_word_count=256):
     all_trees = []
     best_trees = []
     find_exact_match = False
     for h_index, html in enumerate(htmls):
         soup = bs4.BeautifulSoup(html, 'html.parser')
         word_count = len(soup.get_text().split())
-        if word_count > 500:
+        if word_count > max_word_count:
             possible_trees = [(soup, [])]
             target_trees = []
-            #  split the entire dom tee into subtrees, until the length of the subtree is less than 500 words
+            #  split the entire dom tee into subtrees, until the length of the subtree is less than max_word_count words
             #  find all possible trees
             while True:
                 if len(possible_trees) == 0:
@@ -99,15 +101,15 @@ def get_best_tree(htmls, answer):
                         else:
                             new_tree = (child, tree[1] + [child.name])
                         word_count = len(child.get_text().split())
-                        if word_count > 500:
+                        if word_count > max_word_count:
                             possible_trees.append(new_tree)
                         else:
                             target_trees.append(new_tree)
                     else:
                         bare_word_count += len(str(child).split())
 
-                #  add node with more than 500 words
-                if bare_word_count > 500:
+                #  add node with more than max_word_count words
+                if bare_word_count > max_word_count:
                     target_trees.append(tree)
                 #  add leaf node
                 if len(tag_children) == 0:
@@ -126,7 +128,7 @@ def get_best_tree(htmls, answer):
                     best_tree = tree
                     find_exact_match = True
         else:
-            # word count < 500
+            # word count < max_word_count
             # count soup child
             soup_children = [c for c in soup.contents if isinstance(c, bs4.element.Tag)]
 

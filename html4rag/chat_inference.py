@@ -10,6 +10,7 @@ import time
 import loguru
 import requests
 from requests.adapters import HTTPAdapter
+import random
 from tqdm import tqdm
 from bs4 import BeautifulSoup as bs, Comment
 from urllib3 import Retry
@@ -69,8 +70,8 @@ def html2markdown(html_content):
             try:
                 markdown.append(md(html_content[i]))
             except Exception as e:
-                print(f"convert html to markdown failed: {str(e)}")
-                print("convert to raw text instead")
+                loguru.logger.info(f"convert html to markdown failed: {str(e)}")
+                loguru.logger.info("convert to raw text instead")
                 markdown.append(bs_parse(html_content[i]))
 
         markdown = " ".join(markdown)
@@ -79,8 +80,8 @@ def html2markdown(html_content):
         try:
             markdown = md(html_content)
         except Exception as e:
-            print(f"convert html to markdown failed: {str(e)}")
-            print("convert to raw text instead")
+            loguru.logger.info(f"convert html to markdown failed: {str(e)}")
+            loguru.logger.info("convert to raw text instead")
             markdown = bs_parse(html_content)
     return markdown
 
@@ -122,7 +123,7 @@ def tgi_api_call(url, prompt, repetition_penalty=-1, temperature=-1, top_k=-1, t
             ans = data["generated_text"]
     except Exception as e:
         loguru.logger.error(response.text)
-        # print(str(e))
+        # loguru.logger.info(str(e))
         ans = response.text
     return ans
 
@@ -158,7 +159,7 @@ def vllm_api_call(url, prompt, repetition_penalty=-1, temperature=-1, top_k=-1, 
         ans = data["text"][0][len(prompt):].strip()
     except Exception as e:
         loguru.logger.error(response.text)
-        # print(str(e))
+        # loguru.logger.info(str(e))
         ans = response.text
     return ans
 
@@ -209,11 +210,10 @@ def truncate_input(html, max_context_window=32000):
     tokens = tokenizer.tokenize(html)
     if len(tokens) > max_context_window:
         html = tokenizer.convert_tokens_to_string(tokens[:max_context_window])
-        # print(f"html truncated to {max_context_window} tokens")
+        # loguru.logger.info(f"html truncated to {max_context_window} tokens")
     return html
 
 
-from bs4 import BeautifulSoup, PageElement
 from io import StringIO
 
 
@@ -250,6 +250,8 @@ if __name__ == "__main__":
     argparser.add_argument("--version", type=str, default="v0712")
     argparser.add_argument("--api_type", type=str, default="vllm")
     argparser.add_argument("--offline", action="store_true")
+    argparser.add_argument("--src_granularity", type=int, default=256)
+    argparser.add_argument("--granularity", type=int, default=128)
     args = argparser.parse_args()
     chat_model = args.chat_model
     dataset = args.dataset
@@ -261,19 +263,21 @@ if __name__ == "__main__":
     rerank_model = args.rerank_model
     version = args.version
     api_type = args.api_type
+    src_granularity = args.src_granularity
+    granularity = args.granularity
     search_engine = "bing"
     max_context_window = configure_max_context_window(chat_model)
-    if reference_format in ["html-trim", "fill-chunk", "treegen"]:
+    if reference_format in ["html-trim", "fill-chunk", "tree-gen", "chunk-rerank-tree-gen"]:
         multi_docs = "chunk"
-        print(f"changing multi_docs to chunk for reference_format {reference_format}")
-        print(f"rewrite_method: {rewrite_method}, rerank_model: {rerank_model}")
+        loguru.logger.info(f"changing multi_docs to chunk for reference_format {reference_format}")
+        loguru.logger.info(f"rewrite_method: {rewrite_method}, rerank_model: {rerank_model}")
 
     if dataset in ["wstqa", "statsgov"]:
         language = "zh"
-        print(f"setting language to {language} for dataset {dataset}")
+        loguru.logger.info(f"setting language to {language} for dataset {dataset}")
     elif dataset in ["websrc", "asqa", "nq", "hotpot-qa", "trivia-qa", "eli5", "musique"]:
         language = "en"
-        print(f"setting language to {language} for dataset {dataset}")
+        loguru.logger.info(f"setting language to {language} for dataset {dataset}")
     else:
         raise NotImplementedError(f"dataset {dataset} not implemented")
 
@@ -312,25 +316,34 @@ if __name__ == "__main__":
     else:
         raise NotImplementedError(f"chat_model {chat_model} not implemented")
 
+    context_window = f"{max_context_window // 1000}k"
     if multi_docs != "single":
         if reference_format == "html-simple":
-            print(f"changing input_file to simple format for reference_format {reference_format}")
+            loguru.logger.info(f"changing input_file to simple format for reference_format {reference_format}")
             input_file = f"./html_data/{dataset}/{search_engine}/{search_engine}html-{rewrite_method}-{dataset}-simple-{split}.jsonl"
+        elif reference_format in ["tree-rerank"]:
+            input_file = f"./html_data/{dataset}/{reference_format}/{tokenizer_name}/{search_engine}html-{rewrite_method}-{rerank_model}-{granularity}-{dataset}-{split}-{context_window}.jsonl"
         elif reference_format in ["html-trim", "fill-chunk"]:
             #  read file according to context window
-            print(f"changing input_file to trim format for reference_format {reference_format}")
-            context_window = f"{max_context_window // 1000}k"
-            input_file = f"./html_data/{dataset}/{search_engine}/{reference_format}/{tokenizer_name}/{search_engine}html-{rewrite_method}-{rerank_model}-{dataset}-{split}-{context_window}.jsonl"
-        elif reference_format == "treegen":
-            context_window = f"{max_context_window // 1000}k"
-            input_file = f"./html_data/{dataset}/treegen/{version}/{tokenizer_name}/{search_engine}html-{rewrite_method}-{version}-{dataset}-{split}-{context_window}.jsonl"
+            loguru.logger.info(f"changing input_file to trim format for reference_format {reference_format}")
+            input_file = f"./html_data/{dataset}/{reference_format}/{tokenizer_name}/{search_engine}html-{rewrite_method}-{rerank_model}-{dataset}-{split}-{context_window}.jsonl"
+        elif reference_format == "tree-gen":
+            input_file = f"./html_data/{dataset}/tree-gen/{version}/{tokenizer_name}/{search_engine}html-{rewrite_method}-{version}-{granularity}-{dataset}-{split}-{context_window}.jsonl"
+        elif reference_format in ["chunk-rerank-tree-gen", "tree-rerank-tree-gen"]:
+            if dataset in ["asqa", "nq", "eli5"]:
+                coarse_context_window = {"1k": "2k", "2k": "3k", "4k": "6k", "8k": "12k", "16k": "24k", "32k": "48k", "64k": "96k"}[context_window]
+            else:
+                coarse_context_window = {"1k": "2k", "2k": "4k", "4k": "8k", "8k": "16k", "16k": "24k", "32k": "48k", "64k": "96k"}[context_window]
+            input_file = f"./html_data/{dataset}/{reference_format}/{version}/{tokenizer_name}/{search_engine}html-{rewrite_method}-{rerank_model}-{src_granularity}to{granularity}-{dataset}-{split}-{coarse_context_window}to{context_window}.jsonl"
+        elif reference_format in ["llmlingua", "bgelargeen", "jinaai-reader", "e5-mistral", "bm25"]:
+            input_file = f"./html_data/{dataset}/baselines/{tokenizer_name}/{search_engine}html-{rewrite_method}-{reference_format}-{dataset}-{split}-{context_window}.jsonl"
         else:
             # multi docs
             input_file = f"./html_data/{dataset}/{search_engine}/{search_engine}html-{rewrite_method}-{dataset}-{split}.jsonl"
     else:
         input_file = f"./html_data/{dataset}/{dataset}-{split}.jsonl"
 
-    print(f"input_file: {input_file}")
+    loguru.logger.info(f"input_file: {input_file}")
     data_lines = [json.loads(l) for l in open(input_file)]
 
     if args.mini_dataset:
@@ -347,10 +360,14 @@ if __name__ == "__main__":
         output_file = f"{output_dir}/{chat_model}-{reference_format}-{dataset}-{split}.jsonl"
     elif reference_format in ["html-trim", "fill-chunk"]:
         output_file = f"{output_dir}/{chat_model}-{reference_format}-{rewrite_method}-{rerank_model}-{dataset}-{split}.jsonl"
-    elif reference_format == "treegen":
-        output_file = f"{output_dir}/{chat_model}-{reference_format}-{rewrite_method}-{version}-{dataset}-{split}.jsonl"
+    elif reference_format == "tree-gen":
+        output_file = f"{output_dir}/{chat_model}-{reference_format}-{rewrite_method}-{version}-{granularity}-{dataset}-{split}.jsonl"
+    elif reference_format == "tree-rerank":
+        output_file = f"{output_dir}/{chat_model}-{reference_format}-{rewrite_method}-{rerank_model}-{granularity}-{dataset}-{split}.jsonl"
+    elif reference_format in ["chunk-rerank-tree-gen", "tree-rerank-tree-gen"]:
+        output_file = f"{output_dir}/{chat_model}-{reference_format}-{rewrite_method}-{rerank_model}-{src_granularity}to{granularity}-{coarse_context_window}-{version}-{dataset}-{split}.jsonl"
     else:
-        output_file = f"{output_dir}/{chat_model}-{reference_format}-{rewrite_method}-{multi_docs}-{dataset}-{split}.jsonl"
+        output_file = f"{output_dir}/{chat_model}-{reference_format}-{rewrite_method}-{dataset}-{split}.jsonl"
     with open(output_file, "w") as f:
         pass
 
@@ -360,17 +377,20 @@ if __name__ == "__main__":
 
     tokenizer = AutoTokenizer.from_pretrained(tokenizer_path, trust_remote_code=True)
 
-    print(f"url: {url}")
-    print(f"dataset: {dataset}, split: {split}, chat_model: {chat_model}, reference_format: {reference_format}")
+    loguru.logger.info(f"url: {url}")
+    loguru.logger.info(f"dataset: {dataset}, split: {split}, chat_model: {chat_model}, reference_format: {reference_format}")
 
     model_inputs = []
-    numthreads = min(32, 512 // (max_context_window // 1000))
+    numthreads = min(32, 256 // (max_context_window // 1000))
     loguru.logger.info(f"numthreads: {numthreads}")
     for idx in tqdm(range(len(data_lines)), desc=f"{dataset}-{split} prepare input", total=len(data_lines)):
 
-        if reference_format in ["html-trim", "treegen"]:
+        if reference_format in ["html-trim", "tree-gen", "chunk-rerank-tree-gen", "tree-rerank", "tree-rerank-tree-gen"]:
             #  trim html
-            html = " ".join(data_lines[idx]["html_trim"])
+            if isinstance(data_lines[idx]['html_trim'], list):
+                html = " ".join(data_lines[idx]["html_trim"])
+            else:
+                html = data_lines[idx]["html_trim"]
             if language == "en":
                 model_input = html_prompt_format_en.format(pre_text=pre_text, post_text=post_text,
                                                            html_content=html,
@@ -379,15 +399,33 @@ if __name__ == "__main__":
                 model_input = html_prompt_format_zh.format(pre_text=pre_text, post_text=post_text,
                                                            html_content=html,
                                                            question=data_lines[idx]['question'])
-        elif reference_format == "fill-chunk":
-            raw_text = " ".join(data_lines[idx]['fill_chunk'])
+        elif reference_format in ["llmlingua", "fill-chunk", "bgelargeen", "e5-mistral", "bm25"]:
+            if isinstance(data_lines[idx]['html_trim'], list):
+                ref = " ".join(data_lines[idx]["html_trim"])
+            else:
+                ref = data_lines[idx]["html_trim"]
+            markdown_text = truncate_input(ref, max_context_window=max_context_window)
             if language == "en":
                 model_input = raw_text_prompt_format_en.format(pre_text=pre_text, post_text=post_text,
-                                                               raw_text_content=raw_text,
+                                                               raw_text_content=markdown_text,
                                                                question=data_lines[idx]['question'])
             elif language == "zh":
                 model_input = raw_text_prompt_format_zh.format(pre_text=pre_text, post_text=post_text,
-                                                               raw_text_content=raw_text,
+                                                               raw_text_content=markdown_text,
+                                                               question=data_lines[idx]['question'])
+        elif reference_format in ["jinaai-reader"]:
+            if isinstance(data_lines[idx]['html_trim'], list):
+                ref = " ".join(data_lines[idx]["html_trim"])
+            else:
+                ref = data_lines[idx]["html_trim"]
+            markdown_text = truncate_input(ref, max_context_window=max_context_window)
+            if language == "en":
+                model_input = markdown_prompt_format_en.format(pre_text=pre_text, post_text=post_text,
+                                                               markdown_content=markdown_text,
+                                                               question=data_lines[idx]['question'])
+            elif language == "zh":
+                model_input = markdown_prompt_format_zh.format(pre_text=pre_text, post_text=post_text,
+                                                               markdown_content=markdown_text,
                                                                question=data_lines[idx]['question'])
         else:
             if re.match(r"top\d+", multi_docs):
@@ -413,7 +451,7 @@ if __name__ == "__main__":
                                                                html_content=truncate_input(html,
                                                                                            max_context_window=max_context_window),
                                                                question=data_lines[idx]['question'])
-            elif reference_format == "raw_text":
+            elif reference_format == "raw-text":
                 if language == "en":
                     model_input = raw_text_prompt_format_en.format(pre_text=pre_text, post_text=post_text,
                                                                    raw_text_content=truncate_input(html2raw_text(html),
@@ -445,8 +483,8 @@ if __name__ == "__main__":
         while True:
             res = chat_inference(model_input, url)
             if "stream timeout" in res:
-                # print(f"stream timeout, retrying...")
-                time.sleep(5)
+                # loguru.logger.info(f"stream timeout, retrying...")
+                time.sleep(random.random() * 5 + 3)
             else:
                 data_lines[idx][f"{chat_model}_{reference_format}"] = res
                 break
@@ -469,7 +507,7 @@ if __name__ == "__main__":
         # Generate texts from the prompts. The output is a list of RequestOutput objects
         # that contain the prompt, generated text, and other information.
         outputs = llm.generate(model_inputs, sampling_params)
-        # Print the outputs.
+        # loguru.logger.info the outputs.
         oidx = 0
         for output in outputs:
             prompt = output.prompt
@@ -498,7 +536,7 @@ if __name__ == "__main__":
     # with concurrent.futures.ThreadPoolExecutor(max_workers=64) as executor:
     #     for idx in tqdm(range(len(data_lines)), desc=f"{dataset}-{split}", total=len(data_lines)):
     #         # if idx == 0:
-    #         #     print(f"model_input: \n{model_input}")
+    #         #     loguru.logger.info(f"model_input: \n{model_input}")
     #
     #         future = executor.submit(chat_inference, model_inputs[idx], url)
     #         response = future.result()

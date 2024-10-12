@@ -45,7 +45,7 @@ try:
         from flash_attn import flash_attn_func, flash_attn_varlen_func
         from flash_attn.bert_padding import index_first_axis, pad_input, unpad_input  # noqa
 
-        loguru.logger.info("Successfully imported Flash Attention 2.0")
+        # loguru.logger.info("Successfully imported Flash Attention 2.0")
 except ImportError as e:
     loguru.logger.warning(f"Flash Attention 2.0 is not available: {e}")
     pass
@@ -1529,31 +1529,34 @@ class ChatGLMForHTMLTreeGeneration(ChatGLMForConditionalGeneration):
         self.transformer = ChatGLMModel(config, empty_init=empty_init, device=device)
         self.num_labels = config.num_labels
         self.config = config
+        self.max_node_words = 32
 
     @torch.inference_mode()
     def generate_html_tree(self,
                            tokenizer,
                            query: List[str],
                            htmls: List[List[str]],
-                           parallel_size: int = 1,
                            **kwargs):
         def apply_html_tree_template(query, htmls):
             template = """**HTML**: ```{input_html}```\n**Question**: **{question}**\n Your task is to identify the most relevant text piece to the given question in the HTML document. This text piece could either be a direct paraphrase to the fact, or a supporting evidence that can be used to infer the fact. The overall length of the text piece should be more than 300 words and less than 500 words. You should provide the path to the text piece in the HTML document. An example for the output is: <html 1><body><div 2><p>Some key information..."""
-            return template.format(input_html=htmls[0], question=query)
+            return template.format(input_html="\n".join(htmls), question=query)
 
         res_html_refs = []
         #  get the generation probability of tree nodes
         for idx, _htmls in enumerate(htmls):
-            html_token_lens = [len(tokenizer.encode(html)) for html in _htmls]
-
-            total_html_token_len = sum(html_token_lens)
-            while total_html_token_len > self.config.seq_length - 2048:
-                if len(_htmls) == 1:
-                    break
-                max_length_idx = html_token_lens.index(max(html_token_lens))
-                html_token_lens.pop(max_length_idx)
-                _htmls.pop(max_length_idx)
+            if isinstance(_htmls, str):
+                _htmls = [_htmls]
+            else:
+                #  drop htmls that are too long
+                html_token_lens = [len(tokenizer.encode(html)) for html in _htmls]
                 total_html_token_len = sum(html_token_lens)
+                while total_html_token_len > self.config.seq_length - 2048:
+                    if len(_htmls) == 1:
+                        break
+                    max_length_idx = html_token_lens.index(max(html_token_lens))
+                    html_token_lens.pop(max_length_idx)
+                    _htmls.pop(max_length_idx)
+                    total_html_token_len = sum(html_token_lens)
             model_input = apply_html_tree_template(query, _htmls)
 
             inputs = tokenizer.apply_chat_template([{"role": "user", "content": model_input}], add_special_tokens=True,
@@ -1566,8 +1569,8 @@ class ChatGLMForHTMLTreeGeneration(ChatGLMForConditionalGeneration):
                 soup.append(bs4.BeautifulSoup(html, 'html.parser'))
 
             token_id_paths = []
-            html_chunk_paths = split_tree(soup)
-            divisible = [p[2] for p in html_chunk_paths]
+            html_chunk_paths = split_tree(soup, max_node_words=self.max_node_words)
+            is_leaf = [p[2] for p in html_chunk_paths]
             html_chunk_paths = [p[1] for p in html_chunk_paths]
 
             for path in html_chunk_paths:
@@ -1616,7 +1619,9 @@ class ChatGLMForHTMLTreeGeneration(ChatGLMForConditionalGeneration):
                 force_token_id = torch.tensor(force_token_id, device=self.device)
                 probs = torch.gather(outputs.logits[:, 0, :], -1, force_token_id.unsqueeze(0))
                 # softmax
-                probs = torch.nn.functional.softmax(probs, dim=-1)
+                # probs = torch.nn.functional.softmax(probs, dim=-1)
+                # . linear transformation
+                probs = probs / probs.sum()
                 probs = probs.squeeze(0).detach().to(torch.float32).cpu().numpy()
                 for i, child in enumerate(children):
                     child.prob = str(probs[i])
@@ -1625,7 +1630,7 @@ class ChatGLMForHTMLTreeGeneration(ChatGLMForConditionalGeneration):
             res_html_refs.append({
                 "html": str(soup),
                 "paths": html_chunk_paths,
-                "path_divisible": divisible,
+                "is_leaf": is_leaf,
                 "path_token_ids": token_id_paths,
                 "node_tree": list(TokenDotExporter(root, nodenamefunc=nodenamefunc))
             })

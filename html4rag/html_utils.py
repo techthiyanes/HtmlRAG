@@ -1,21 +1,28 @@
 import json
+import re
+
 from bs4 import Comment
 from langchain_community.embeddings import HuggingFaceHubEmbeddings
 from collections import defaultdict
-from typing import List, Tuple
+from typing import List, Tuple, Dict, Optional, Any, cast
 
 import numpy as np
 from anytree import Node, RenderTree
 import bs4
 from anytree import PreOrderIter
 from anytree.exporter import DotExporter
+from langchain_core.documents import Document
+from langchain_text_splitters import HTMLSectionSplitter
+import os
+import pathlib
+
 
 def trim_path(path):
-    #  not divisible, remove the tag
-    if not path["divisible"]:
+    #  is leaf, remove the tag
+    if path["is_leaf"]:
         path["tag"].decompose()
         return
-    #  divisible, remove the text directly under the tag
+    #  not leaf, remove the text directly under the tag
     else:
         for c in path["tag"].contents:
             if not isinstance(c, bs4.element.Tag):
@@ -23,7 +30,7 @@ def trim_path(path):
                 #  remove the text node
                 c.extract()
 
-def truncate_input(html,chat_tokenizer, max_context_window=30000):
+def truncate_input(html, chat_tokenizer, max_context_window=30000):
     if isinstance(html, list):
         html = " ".join(html)
     #  if html is longer than 30000 tokens, truncate it
@@ -150,11 +157,11 @@ class TokenIdNode(Node):
         self.prob = kwargs.get('prob', np.float32(0.0))
 
 
-def split_tree(soup: bs4.BeautifulSoup, max_node_words=500) -> List[Tuple[bs4.element.Tag, List[str], bool]]:
+def split_tree(soup: bs4.BeautifulSoup, max_node_words=512) -> List[Tuple[bs4.element.Tag, List[str], bool]]:
     word_count = len(soup.get_text().split())
     if word_count > max_node_words:
         possible_trees = [(soup, [])]
-        target_trees = []
+        target_trees = []  # [(tag, path, is_leaf)]
         #  split the entire dom tee into subtrees, until the length of the subtree is less than max_node_words words
         #  find all possible trees
         while True:
@@ -168,6 +175,8 @@ def split_tree(soup: bs4.BeautifulSoup, max_node_words=500) -> List[Tuple[bs4.el
                 if isinstance(child, bs4.element.Tag):
                     tag_children[child.name] += 1
             _tag_children = {k: 0 for k in tag_children.keys()}
+
+            #  check if the tree can be split
             for child in tree[0].contents:
                 if isinstance(child, bs4.element.Tag):
                     #  change child tag with duplicate names
@@ -183,7 +192,7 @@ def split_tree(soup: bs4.BeautifulSoup, max_node_words=500) -> List[Tuple[bs4.el
                     if word_count > max_node_words and len(new_tree[1]) < 64:
                         possible_trees.append(new_tree)
                     else:
-                        target_trees.append((new_tree[0], new_tree[1], False))
+                        target_trees.append((new_tree[0], new_tree[1], True))
                 else:
                     bare_word_count += len(str(child).split())
 
@@ -196,7 +205,7 @@ def split_tree(soup: bs4.BeautifulSoup, max_node_words=500) -> List[Tuple[bs4.el
     else:
         soup_children = [c for c in soup.contents if isinstance(c, bs4.element.Tag)]
         if len(soup_children) == 1:
-            target_trees = [(soup_children[0], [soup_children[0].name], False)]
+            target_trees = [(soup_children[0], [soup_children[0].name], True)]
         else:
             # add an html tag to wrap all children
             new_soup = bs4.BeautifulSoup("", 'html.parser')
@@ -204,5 +213,221 @@ def split_tree(soup: bs4.BeautifulSoup, max_node_words=500) -> List[Tuple[bs4.el
             new_soup.append(new_tag)
             for child in soup_children:
                 new_tag.append(child)
-            target_trees = [(new_tag, ["html"], False)]
+            target_trees = [(new_tag, ["html"], True)]
     return target_trees
+
+
+def trim_html_tree(html, paths, is_leaf, node_tree, chat_tokenizer, node_tokenizer, max_context_window,
+                   log_threshold=1e-9):
+    #  reconstruct the tree
+    root = TokenIdNode(-1, prob=1.0, input_ids=[])
+    for nidx, line in enumerate(node_tree):
+        node, prob, input_ids = line.split("|")
+        node = int(node)
+        prob = float(prob)
+        input_ids = json.loads(input_ids)
+        if node == -1:
+            # root node
+            pass
+        else:
+            # token = node_tokenizer.decode([node])
+            parent = root
+            for tid in input_ids:
+                find_child = False
+                for c in parent.children:
+                    if c.input_ids[-1] == tid:
+                        parent = c
+                        find_child = True
+                        break
+                if not find_child:
+                    break
+            node = TokenIdNode(node, parent=parent, prob=prob, input_ids=input_ids)
+
+    #  sort paths by prob
+    path_probs = []
+    for pidx in range(len(paths)):
+        path = paths[pidx]
+        str_path = "<" + "><".join(path) + ">"
+        path_tokens = node_tokenizer.encode(str_path, add_special_tokens=False)
+        path_token_prob = []
+        node = root
+        for tid in path_tokens:
+            for c in node.children:
+                if c.name == tid:
+                    node = c
+                    # print(f"token id: {tid}, token: {node_tokenizer.decode([tid])}, prob: {node.prob}")
+                    path_token_prob.append(node.prob)
+                    break
+        path_probs.append(path_token_prob)
+
+    average_depth = np.mean([len(p) for p in paths])
+    #  node prob is the last token prob that is not 1.0
+    node_probs = [np.log(path_probs[i][-1]) if path_probs[i][-1] > log_threshold else np.log(log_threshold) for
+                  i in range(len(path_probs))]
+    path_log_probs = [np.sum([np.log(p) if p > log_threshold else np.log(log_threshold) for p in path]) / average_depth
+                      for path in path_probs]
+
+    paths = [{"path": paths[i], "path_prob": path_log_probs[i], "node_prob": node_probs[i],
+              "is_leaf": is_leaf[i]} for i in range(len(paths))]
+    #  sort paths by prob
+
+    soup = bs4.BeautifulSoup(html, 'html.parser')
+    for idj in range(len(paths)):
+        path = paths[idj]["path"]
+        tag = soup
+        for p in path:
+            for child in tag.contents:
+                if isinstance(child, bs4.element.Tag):
+                    if child.name == p:
+                        tag = child
+                        break
+
+        paths[idj]["tag"] = tag
+        paths[idj]["token_length"] = len(chat_tokenizer.encode(str(tag), add_special_tokens=False))
+        paths[idj]["prob"] = paths[idj]["path_prob"]
+    #  sort paths by prob
+    paths = sorted(paths, key=lambda x: x["prob"], reverse=True)
+    total_token_length = sum([p["token_length"] for p in paths])
+
+    #  remove low prob paths
+    while total_token_length > max_context_window:
+        if len(paths) == 1:
+            break
+        discarded_path = paths.pop()
+        total_token_length -= discarded_path["token_length"]
+        trim_path(discarded_path)
+
+    total_token_length = len(chat_tokenizer.encode(simplify_html(soup), add_special_tokens=False))
+    while total_token_length > max_context_window:
+        if len(paths) == 1:
+            break
+        discarded_path = paths.pop()
+        trim_path(discarded_path)
+        total_token_length = len(chat_tokenizer.encode(simplify_html(soup), add_special_tokens=False))
+
+    if total_token_length > max_context_window:
+        # loguru.logger.warning(f"dataset {dataset} sample {idx} cannot be trimmed to {max_context_window} tokens")
+        html_trim = truncate_input(simplify_html(soup), chat_tokenizer, max_context_window)
+    else:
+        html_trim = simplify_html(soup)
+
+    assert len(chat_tokenizer.encode(
+        html_trim,
+        add_special_tokens=False)) <= max_context_window, f"html length: {len(chat_tokenizer.encode(html_trim, add_special_tokens=False))}, max_context_window: {max_context_window}"
+
+    return html_trim
+
+
+def clean_xml(html):
+    # remove tags starts with <?xml
+    html = re.sub(r"<\?xml.*?>", "", html)
+    # remove tags starts with <!DOCTYPE
+    html = re.sub(r"<!DOCTYPE.*?>", "", html)
+    # remove tags starts with <!DOCTYPE
+    html = re.sub(r"<!doctype.*?>", "", html)
+    return html
+
+
+headers_to_split_on = [
+    ("h1", "Header 1"),
+    ("h2", "Header 2"),
+    ("h3", "Header 3"),
+    ("h4", "Header 4"),
+    ("body", "Body"),
+]
+
+
+class HTMLSplitter(HTMLSectionSplitter):
+    def split_html_by_headers(
+            self, html_doc: str
+    ) -> List[Dict[str, Optional[str]]]:
+        try:
+            from bs4 import BeautifulSoup, PageElement  # type: ignore[import-untyped]
+        except ImportError as e:
+            raise ImportError(
+                "Unable to import BeautifulSoup/PageElement, \
+                    please install with `pip install \
+                    bs4`."
+            ) from e
+
+        soup = BeautifulSoup(html_doc, "html.parser")
+        headers = list(self.headers_to_split_on.keys())
+        sections = []
+
+        headers = soup.find_all(["body"] + headers)
+
+        for i, header in enumerate(headers):
+            header_element: PageElement = header
+            if i == 0:
+                current_header = "#TITLE#"
+                current_header_tag = "h1"
+                section_content: List = []
+            else:
+                current_header = header_element.text.strip()
+                current_header_tag = header_element.name
+                section_content = []
+            for element in header_element.next_elements:
+                if i + 1 < len(headers) and element == headers[i + 1]:
+                    break
+                if isinstance(element, str):
+                    section_content.append(element)
+            content = " ".join(section_content).strip()
+
+            if content != "":
+                sections.append({
+                    "header": current_header,
+                    "content": content,
+                    "tag_name": current_header_tag,
+                })
+
+        return sections
+
+    def split_text_from_file(self, file: Any) -> List[Document]:
+        """Split HTML file
+
+        Args:
+            file: HTML file
+        """
+        file_content = file.getvalue()
+        file_content = self.convert_possible_tags_to_header(file_content)
+        sections = self.split_html_by_headers(file_content)
+
+        return [
+            Document(
+                cast(str, section["content"]),
+                metadata={
+                    self.headers_to_split_on[
+                        str(section["tag_name"])
+                    ]: section["header"]
+                },
+            )
+            for section in sections
+        ]
+
+    def convert_possible_tags_to_header(self, html_content: str) -> str:
+        if self.xslt_path is None:
+            return html_content
+
+        try:
+            from lxml import etree
+        except ImportError as e:
+            raise ImportError(
+                "Unable to import lxml, please install with `pip install lxml`."
+            ) from e
+        # use lxml library to parse html document and return xml ElementTree
+        parser = etree.HTMLParser()
+        try:
+            tree = etree.fromstring(html_content, parser)
+        except:
+            open("error_html.html", "w").write(html_content)
+
+        # document transformation for "structure-aware" chunking is handled with xsl.
+        # this is needed for htmls files that using different font sizes and layouts
+        # check to see if self.xslt_path is a relative path or absolute path
+        if not os.path.isabs(self.xslt_path):
+            xslt_path = pathlib.Path(__file__).parent / self.xslt_path
+
+        xslt_tree = etree.parse("html4rag/converting_to_header.xslt")
+        transform = etree.XSLT(xslt_tree)
+        result = transform(tree)
+        return str(result)

@@ -18,6 +18,9 @@ if __name__ == "__main__":
     argparser.add_argument("--ckpt_path", type=str, default="../../huggingface/glm-4-9b-chat-1m")
     argparser.add_argument("--ckpt_version", type=str, default="zeroshot")
     argparser.add_argument("--mini_dataset", action="store_true")
+    argparser.add_argument("--max_node_words", type=int, default=16)
+    argparser.add_argument("--use_quantized", action="store_true")
+    argparser.add_argument("--parallel_size", type=int, default=1)
     args = argparser.parse_args()
     ckpt_path = args.ckpt_path
     split = args.split
@@ -25,6 +28,8 @@ if __name__ == "__main__":
     rewrite_method = args.rewrite_method
     dataset = args.dataset
     ckpt_version = args.ckpt_version
+    max_node_words = args.max_node_words
+    parallel_size = args.parallel_size
     loguru.logger.info(f"ckpt version: {ckpt_version}, path: {ckpt_path}")
     print(f"ckpt version: {ckpt_version}, path: {ckpt_path}")
     assert ckpt_version in ckpt_path, f"ckpt version {ckpt_version} mismatch with ckpt path {ckpt_path}"
@@ -33,13 +38,13 @@ if __name__ == "__main__":
     tokenizer = AutoTokenizer.from_pretrained(ckpt_path, trust_remote_code=True)
     if torch.cuda.is_available():
         device = "cuda"
-        parallel_size = torch.cuda.device_count()
         loguru.logger.info(f"Parallel size: {parallel_size}")
         print(f"Parallel size: {parallel_size}")
         shard_pool = []
     else:
         # model=AutoModelForCausalLM.from_pretrained("../../../huggingface/glm-4-9b-chat-1m",trust_remote_code=True)
         model = AutoModelForSeq2SeqLM.from_pretrained(ckpt_path, trust_remote_code=True, torch_dtype=torch.float16)
+        model.max_node_words = max_node_words
         device = "cpu"
         model.to(device).eval()
 
@@ -47,9 +52,15 @@ if __name__ == "__main__":
 
 
     def init_shard_model(rank):
-        shard_model = AutoModelForSeq2SeqLM.from_pretrained(ckpt_path, trust_remote_code=True,
-                                                            torch_dtype=torch.float16)
-        shard_model.to(f"cuda:{rank}").eval()
+        if args.use_quantized:
+            gpu_per_shard = torch.cuda.device_count() // parallel_size
+            max_memory_mapping = {rank * gpu_per_shard + k: "79GB" for k in range(gpu_per_shard)}
+            shard_model = AutoModelForSeq2SeqLM.from_pretrained(ckpt_path, trust_remote_code=True, max_memory=max_memory_mapping, device_map="auto", load_in_8bit=True).eval()
+            shard_model.max_node_words = max_node_words
+        else:
+            shard_model = AutoModelForSeq2SeqLM.from_pretrained(ckpt_path, trust_remote_code=True, torch_dtype=torch.bfloat16)
+            shard_model.max_node_words = max_node_words
+            shard_model.to(f"cuda:{rank}").eval()
         shard_pool.append(shard_model)
 
 
@@ -74,7 +85,7 @@ if __name__ == "__main__":
     print(f"Total number of nodes: {total_len}")
     pbar = tqdm(total=total_len, desc=f"Processing {dataset} {split}")
 
-    output_file = f"./html_data/{dataset}/treegen/{ckpt_version}/{search_engine}html-{rewrite_method}-{ckpt_version}-{dataset}-{split}.jsonl"
+    output_file = f"./html_data/{dataset}/tree-gen/{ckpt_version}/{search_engine}html-{rewrite_method}-{ckpt_version}-{max_node_words}-{dataset}-{split}.jsonl"
     if not os.path.exists(os.path.dirname(output_file)):
         os.makedirs(os.path.dirname(output_file), exist_ok=True)
 
@@ -85,7 +96,7 @@ if __name__ == "__main__":
                 node_line = node_lines.pop(0)
                 question = node_line['question']
                 htmls = [h["html"] for h in node_line[f'{rewrite_method}_results']]
-                html_res = shard_pool[rank].generate_html_tree(tokenizer, [question], [htmls])
+                html_res = shard_pool[rank].generate_html_tree(tokenizer, [question], [htmls], max_seq_length=35000)
                 # loguru.logger.info(f"Calculate probs for {len(html_res[0]['path_probs'])} nodes")
                 node_line.pop(f'{rewrite_method}_results', None)
                 node_line.pop(f'{rewrite_method}_rewrite', None)

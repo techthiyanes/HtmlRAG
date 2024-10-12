@@ -174,12 +174,13 @@ if __name__ == "__main__":
     loguru.logger.info(f"loaded tokenizer {chat_tokenizer_name}")
 
     # context_windows = ["2k", "4k", "8k", "16k", "32k", "64k"]
-    context_windows = ["3k", "6k", "12k", "24k", "48k", "96k"]
+    # context_windows = ["3k", "6k", "12k", "24k", "48k", "96k"]
+    context_windows = ["1k"]
     datasets = ["asqa", "hotpot-qa", "nq", "trivia-qa", "musique"]
 
     def trim_htmls(context_window, dataset):
         input_file = f"./html_data/{dataset}/{search_engine}/{search_engine}html-{rewrite_method}-{rerank_model}-{dataset}-simple-{split}.jsonl"
-        output_dir = f"./html_data/{dataset}/{search_engine}/html-trim/{chat_tokenizer_name}"
+        output_dir = f"./html_data/{dataset}/chunk-rerank/{chat_tokenizer_name}"
         output_file = f"{output_dir}/{search_engine}html-{rewrite_method}-{rerank_model}-{dataset}-{split}-{context_window}.jsonl"
         if not os.path.exists(output_dir):
             os.makedirs(output_dir, exist_ok=True)

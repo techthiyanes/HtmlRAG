@@ -1,10 +1,10 @@
 #!/bin/bash
 
 split="trainfew"
-version="v0907"
+version="v0915"
 rewrite_method="slimplmqr"
 
-python html4rag/treegen_make_sample.py \
+python html4rag/sample_from_tree_rerank.py \
     --version ${version} \
     --split=${split} \
     --rewrite_method=${rewrite_method}
