@@ -4,76 +4,36 @@ from multiprocessing import Process
 
 import loguru
 from bs4 import BeautifulSoup
-from bs4.element import Comment
 from tqdm import tqdm
-
-
-def simplify_html(soup):
-    for script in soup(["script", "style"]):
-        script.decompose()
-    #  remove all attributes
-    for tag in soup.find_all(True):
-        tag.attrs = {}
-    #  remove empty tags recursively
-    while True:
-        removed = False
-        for tag in soup.find_all():
-            if not tag.text.strip():
-                tag.decompose()
-                removed = True
-        if not removed:
-            break
-    #  remove href attributes
-    for tag in soup.find_all("a"):
-        del tag["href"]
-    #  remove comments
-    comments = soup.find_all(string=lambda text: isinstance(text, Comment))
-    for comment in comments:
-        comment.extract()
-
-    def concat_text(text):
-        text = "".join(text.split("\n"))
-        text = "".join(text.split("\t"))
-        text = "".join(text.split(" "))
-        return text
-
-    # remove all tags with no text
-    for tag in soup.find_all():
-        children = [child for child in tag.contents if not isinstance(child, str)]
-        if len(children) == 1:
-            tag_text = tag.get_text()
-            child_text = "".join([child.get_text() for child in tag.contents if not isinstance(child, str)])
-            if concat_text(child_text) == concat_text(tag_text):
-                tag.replace_with_children()
-    #  if html is not wrapped in a html tag, wrap it
-
-    # remove empty lines
-    res = str(soup)
-    lines = [line for line in res.split("\n") if line.strip()]
-    res = "\n".join(lines)
-    return res
+import sys
+sys.path.append("./")
+from html4rag.html_utils import simplify_html
 
 
 if __name__ == "__main__":
     argparser = argparse.ArgumentParser()
     argparser.add_argument("--rewrite_method", type=str, default="t5")
     argparser.add_argument("--split", type=str, default="test")
+    argparser.add_argument("--keep_attr", action="store_true")
     args = argparser.parse_args()
     rewrite_method = args.rewrite_method
     split = args.split
 
-    # datasets = ["asqa", "hotpot-qa", "nq", "trivia-qa", "musique"]
-    datasets = ["trivia-qa"]
+    datasets = ["asqa", "hotpot-qa", "nq", "trivia-qa", "musique", "eli5"]
+    # datasets = ["nq"]
 
     def simplify_html_lines(dataset):
         data_file = f"./html_data/{dataset}/bing/binghtml-{rewrite_method}-{dataset}-{split}.jsonl"
         data_lines = [json.loads(l) for l in open(data_file)]
-        output_file = f"./html_data/{dataset}/bing/binghtml-{rewrite_method}-{dataset}-simple-{split}.jsonl"
+        if args.keep_attr:
+            output_file = f"./html_data/{dataset}/bing/binghtml-{rewrite_method}-{dataset}-simplewithattr-{split}.jsonl"
+        else:
+            output_file = f"./html_data/{dataset}/bing/binghtml-{rewrite_method}-{dataset}-simple-{split}.jsonl"
         loguru.logger.info(f"Reading data from {data_file}")
         for idx in tqdm(range(len(data_lines)), desc=f"Processing {dataset} {split}"):
             for idj in range(len(data_lines[idx][f'{rewrite_method}_results'])):
                 h_soup = BeautifulSoup(data_lines[idx][f'{rewrite_method}_results'][idj]['html'], 'html.parser')
-                data_lines[idx][f'{rewrite_method}_results'][idj]['html'] = simplify_html(h_soup)
+                data_lines[idx][f'{rewrite_method}_results'][idj]['html'] = simplify_html(h_soup, keep_attr=args.keep_attr)
 
         with open(output_file, "w") as f:
             #  try to encode in utf-8, if it fails, try to replace the characters with ?

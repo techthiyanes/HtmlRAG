@@ -321,6 +321,8 @@ if __name__ == "__main__":
         if reference_format == "html-simple":
             loguru.logger.info(f"changing input_file to simple format for reference_format {reference_format}")
             input_file = f"./html_data/{dataset}/{search_engine}/{search_engine}html-{rewrite_method}-{dataset}-simple-{split}.jsonl"
+        elif reference_format == "html-attr":
+            input_file = f"./html_data/{dataset}/{search_engine}/{search_engine}html-{rewrite_method}-{dataset}-simplewithattr-{split}.jsonl"
         elif reference_format in ["tree-rerank"]:
             input_file = f"./html_data/{dataset}/{reference_format}/{tokenizer_name}/{search_engine}html-{rewrite_method}-{rerank_model}-{granularity}-{dataset}-{split}-{context_window}.jsonl"
         elif reference_format in ["html-trim", "fill-chunk"]:
@@ -440,7 +442,7 @@ if __name__ == "__main__":
             else:
                 raise NotImplementedError(f"multi_docs {multi_docs} not implemented")
 
-            if reference_format in ["html", "html-simple"]:
+            if reference_format in ["html", "html-simple", "html-attr"]:
                 if language == "en":
                     model_input = html_prompt_format_en.format(pre_text=pre_text, post_text=post_text,
                                                                html_content=truncate_input(html,

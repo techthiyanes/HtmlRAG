@@ -35,7 +35,7 @@ def parse_url(
     """
     if service_url is None:
         # service_url = "http://172.16.100.225:8081/fetch"  # local url
-        service_url = "http://lb-2nshjbik-dfpxqkgc3sr5jomn.clb.ap-guangzhou.tencentclb.com/fetch"
+        service_url = "http://xxxxx.com/fetch"
     payload = json.dumps({
         "url": url,
         "need_links": need_links,

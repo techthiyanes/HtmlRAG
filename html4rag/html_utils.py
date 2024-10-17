@@ -41,12 +41,13 @@ def truncate_input(html, chat_tokenizer, max_context_window=30000):
     return html
 
 
-def simplify_html(soup):
+def simplify_html(soup, keep_attr=False):
     for script in soup(["script", "style"]):
         script.decompose()
     #  remove all attributes
-    for tag in soup.find_all(True):
-        tag.attrs = {}
+    if not keep_attr:
+        for tag in soup.find_all(True):
+            tag.attrs = {}
     #  remove empty tags recursively
     while True:
         removed = False
