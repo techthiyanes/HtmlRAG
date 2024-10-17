@@ -11,6 +11,14 @@ We propose HtmlRAG, which uses HTML instead of plain text as the format of exter
 
 We provide a simple tookit to apply HtmlRAG in your own RAG systems.
 
+### 🧹 HTML Cleaning
+
+```python
+
+```
+
+If you are interested in reproducing the results in the paper, please follow the instructions below.
+
 ---
 
 ## 🔧 Dependencies
@@ -28,10 +36,6 @@ conda install pytorch==2.0.1 torchvision==0.15.2 torchaudio==2.0.2 pytorch-cuda=
 conda install -c conda-forge faiss-cpu
 pip install scikit-learn transformers transformers[deepspeed] rouge_score evaluate dataset gpustat anytree json5 tensorboardX accelerate bitsandbytes markdownify bs4 sentencepiece loguru tiktoken matplotlib langchain lxml vllm notebook trl spacy rank_bm25 -i https://pypi.tuna.tsinghua.edu.cn/simple
 ```
-
-
-
-
 
 ---
 
@@ -63,7 +67,7 @@ You can use your own data by following the format of the datasets in the [html_d
 {
   "id": "unique_id",
   "question": "query_text",
-  "answers": ["answer_text_1", "answer_text_2", ...]
+  "answers": ["answer_text_1", "answer_text_2"]
 }
 ```
 2. Conduct a optional pre-retrieval process to get sub-queries from the original user's question. The processed sub-queries should be stored in a `{rewrite_method}_result` key in the json object.
@@ -72,14 +76,14 @@ You can use your own data by following the format of the datasets in the [html_d
 {
   "id": "unique_id",
   "question": "query_text",
-  "answers": ["answer_text_1", "answer_text_2", ...],
+  "answers": ["answer_text_1", "answer_text_2"],
   "your_method_rewrite": {
     "questions": [
       {
-        "question": "sub_query_text_1",
+        "question": "sub_query_text_1"
       },
       {
-        "question": "sub_query_text_2",
+        "question": "sub_query_text_2"
       }
     ]
   }
