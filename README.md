@@ -83,7 +83,7 @@ for block in block_tree:
 # Is Leaf:  True
 ```
 
-### Prune HTML Blocks with Embedding Model
+### ✂️ Prune HTML Blocks with Embedding Model
 
 ```python
 from HtmlRAG import EmbedHTMLPruner
@@ -107,7 +107,7 @@ print(pruned_html)
 # </html>
 ```
 
-### Build a Finer Block Tree
+### 🌲 Build a Finer Block Tree
 
 ```python
 block_tree, pruned_html=build_block_tree(pruned_html, max_node_words=10)
@@ -127,7 +127,7 @@ for block in block_tree:
 ```
     
 
-### Prune HTML Blocks with Generative Model
+### ✂️ Prune HTML Blocks with Generative Model
 
 ```python
 from HtmlRAG import GenHTMLPruner
@@ -234,7 +234,7 @@ You can use your own data by following the format of the datasets in the [html_d
 bash ./scripts/simplify_html.sh
 ```
 
-## 🌲 Block-Tree-Based HTML Pruning
+## ✂️ Block-Tree-Based HTML Pruning
 
 ### Step 1: HTML Pruning with Text Embedding
 
