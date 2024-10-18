@@ -1,0 +1,39 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "HtmlRAG"
+version = "0.0.1"
+authors = [
+  { name="Example Author", email="author@example.com" },
+]
+description = "A small toolkit for HTML cleaning and pruning for RAG systems."
+readme = "README.md"
+requires-python = ">=3.8"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+dependencies = [
+    "bs4",
+    "transformers",
+    "torch",
+    "numpy",
+    "langchain-core >= 0.3.0",
+    "langchain-huggingface",
+    "anytree",
+    "langchain-community",
+]
+
+[project.urls]
+Homepage = "https://github.com/pypa/sampleproject"
+Issues = "https://github.com/pypa/sampleproject/issues"
+
+[tool.setuptools.packages.find]
+# All the following settings are optional:
+where = ["."]
+include = ["HtmlRAG"]
+exclude = ["tests"]
+namespaces = true
