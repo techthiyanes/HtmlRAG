@@ -17,7 +17,7 @@ pip install -e .
 ### 🧹 HTML Cleaning
 
 ```python
-from toolkit.HtmlRAG import clean_html
+from HtmlRAG import clean_html
 
 question = "When was the bellagio in las vegas built?"
 html = """
@@ -59,7 +59,7 @@ print(simplified_html)
 ### 🌲 Build Block Tree
 
 ```python
-from toolkit.HtmlRAG import build_block_tree
+from HtmlRAG import build_block_tree
 
 # if you have mutiple HTML documents, merge them using the following code
 # simplified_html = "\n".join([clean_html(html) for html in htmls])
@@ -89,7 +89,7 @@ for block in block_tree:
 ### ✂️ Prune HTML Blocks with Embedding Model
 
 ```python
-from toolkit.HtmlRAG import EmbedHTMLPruner
+from HtmlRAG import EmbedHTMLPruner
 
 embed_html_pruner = EmbedHTMLPruner(embed_model="bm25")
 block_rankings = embed_html_pruner.calculate_block_rankings(question, simplified_html, block_tree)
@@ -135,7 +135,7 @@ for block in block_tree:
 ### ✂️ Prune HTML Blocks with Generative Model
 
 ```python
-from toolkit.HtmlRAG import GenHTMLPruner
+from HtmlRAG import GenHTMLPruner
 
 ckpt_path = "../../../model/train-tree-rerank-phi35-mini/v0915/checkpoint-164"
 gen_embed_pruner = GenHTMLPruner(gen_model=ckpt_path, max_node_words=5)
