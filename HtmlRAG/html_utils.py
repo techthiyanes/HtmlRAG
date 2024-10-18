@@ -309,19 +309,19 @@ def prune_block_tree(html, paths, is_leaf, node_tree, chat_tokenizer, node_token
         total_token_length -= discarded_path["token_length"]
         trim_path(discarded_path)
 
-    total_token_length = len(chat_tokenizer.encode(clean_html(soup), add_special_tokens=False))
+    total_token_length = len(chat_tokenizer.encode(simplify_html(soup), add_special_tokens=False))
     while total_token_length > max_context_window:
         if len(paths) == 1:
             break
         discarded_path = paths.pop()
         trim_path(discarded_path)
-        total_token_length = len(chat_tokenizer.encode(clean_html(soup), add_special_tokens=False))
+        total_token_length = len(chat_tokenizer.encode(simplify_html(soup), add_special_tokens=False))
 
     if total_token_length > max_context_window:
         # loguru.logger.warning(f"dataset {dataset} sample {idx} cannot be trimmed to {max_context_window} tokens")
-        html_trim = truncate_input(clean_html(soup), chat_tokenizer, max_context_window)
+        html_trim = truncate_input(simplify_html(soup), chat_tokenizer, max_context_window)
     else:
-        html_trim = clean_html(soup)
+        html_trim = simplify_html(soup)
 
     assert len(chat_tokenizer.encode(
         html_trim,
