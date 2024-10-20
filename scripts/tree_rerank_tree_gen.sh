@@ -9,17 +9,18 @@ rewrite_method="slimplmqr"
 #ckpt_path="../../model/train-tree-rerank-phi35-mini/v0907/checkpoint-340"
 #ckpt_path="../../model/train-tree-rerank-phi35-mini/v0908/checkpoint-344"
 #ckpt_path="../../model/train-tree-rerank-phi35-mini/v0914/checkpoint-172"
-ckpt_path="../../model/train-tree-rerank-phi35-mini/v0915/checkpoint-164"
-#ckpt_path="../../huggingface/glm-4-9b-chat-1m"
-ckpt_version="v0915"
+#ckpt_path="../../model/train-tree-rerank-phi35-mini/v0915/checkpoint-164"
+ckpt_path="../../model/train-tree-rerank-llama32/v1008/checkpoint-381"
+ckpt_version="v1008"
 #base_path="./llm_modeling/ChatGLM"
-base_path="./llm_modeling/Phi35"
+#base_path="./llm_modeling/Phi35"
+base_path="./llm_modeling/Llama32"
 rerank_model="bgelargeen"
 
 chat_tokenizer_name="llama"
 
-#datasets=("asqa" "hotpot-qa" "nq" "trivia-qa" "musique" "eli5")
-datasets=("asqa" "hotpot-qa" "nq" "trivia-qa" "musique")
+datasets=("asqa" "hotpot-qa" "nq" "trivia-qa" "musique" "eli5")
+#datasets=("asqa" "hotpot-qa" "nq" "trivia-qa" "musique")
 #context_windows=("1k" "2k" "4k" "8k" "16k")
 context_windows=("4k")
 fine_trim_ratios=("custom")
@@ -45,8 +46,8 @@ do
         --fine_trim_ratio ${fine_trim_ratio} \
         --rerank_model=${rerank_model} \
         --chat_tokenizer_name=${chat_tokenizer_name} \
-        --src_max_node_words 0 \
-        --max_node_words 0
+        --src_max_node_words 256 \
+        --max_node_words 128
     done
   done
 done

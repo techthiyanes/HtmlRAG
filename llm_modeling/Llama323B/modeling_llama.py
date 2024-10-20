@@ -1828,9 +1828,7 @@ class LlamaForHTMLTreeGeneration(LlamaPreTrainedModel):
                 child_input_ids = torch.tensor(cur_node.input_ids, dtype=torch.long).unsqueeze(0)
                 # concatenate context input id with child input id
                 child_input_ids = torch.cat([inputs["input_ids"][idx:idx + 1], child_input_ids], dim=1).to(self.device)
-                model_inputs = {
-                    "input_ids": child_input_ids,
-                }
+                model_inputs = self.prepare_inputs_for_generation(child_input_ids, **kwargs)
                 outputs = self(
                     **model_inputs,
                     return_dict=True,

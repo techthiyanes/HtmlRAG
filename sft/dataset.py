@@ -742,14 +742,159 @@ class Phi3Processor:
         return True
 
 
+
+class LlamaProcessor:
+    def __init__(self,
+                 tokenizer: PreTrainedTokenizer,
+                 role_tokens=None,
+                 ignore_token=-100,
+                 auto_pickle=False
+                 ):
+        """
+        128000 <|begin_of_text|>
+        128001 <|end_of_text|>
+        128002 <|reserved_special_token_0|>
+        128003 <|reserved_special_token_1|>
+        128004 <|finetune_right_pad_id|>
+        128005 <|reserved_special_token_2|>
+        128006 <|start_header_id|>
+        128007 <|end_header_id|>
+        128008 <|eom_id|>
+        128009 <|eot_id|>
+        """
+        self.role_tokens = {
+            "assistant": 78191, # "assistant"
+            "system": 9125, # "system"
+            "user": 882 # "user"
+        }
+        self.sep_tokens = {
+            "<|begin_of_text|>": 128000,
+        }
+        self.end_tokens = {
+            "<|begin_of_text|>": 128000,
+            "<|start_header_id>": 128006,
+            "<|end_header_id|>": 128007,
+            "<|eot_id|>": 128009,
+        }
+        self.tokenizer = tokenizer
+        self.max_length = self.tokenizer.model_max_length
+        self.ignore_token = ignore_token
+        self.auto_pickle = auto_pickle
+        self.truncated = 0
+
+    def __call__(self, example):
+        ## 标记 message 的训练方式，只有 assistant 默认是可学习的，可选状态
+        # - true: 参与训练，加 eos。例如：正常 assistant
+        # - false: 不参与训练。例如：一个错误的 assistant message 仅作为多轮 history
+        # - incomplete: 参与训练，不加 eos。例如：当前轮生成中断，下一轮继续生成。
+        learnable = False
+        #. "<|begin_of_text|><|start_header_id|>system<|end_header_id|>\n\nCutting Knowledge Date: December 2023\nToday Date: 18 Oct 2024\n\n<|eot_id|><|start_header_id|>user<|end_header_id|>\n\n"
+        input_ids= [128000, 128006, 9125, 128007, 271, 38766, 1303, 33025, 2696, 25, 6790, 220, 2366, 18, 198, 15724,
+                    2696, 25, 220, 972, 5020, 220, 2366, 19, 271, 128009, 128006, 882, 128007, 271]
+        labels=[self.ignore_token] * len(input_ids)
+        for message in example['messages']:
+            #. add role token
+            input_ids.extend([self.end_tokens["<|start_header_id>"], self.role_tokens[message['role']], self.end_tokens["<|end_header_id|>"]])
+            labels.extend([self.end_tokens["<|start_header_id>"], self.role_tokens[message['role']], self.end_tokens["<|end_header_id|>"]])
+            #. tokenize message content
+            tokens = self.tokenize(message['content'], self.max_length)
+            # . add <|end|> token to the end of each message
+            tokens.append(self.end_tokens["<|eot_id|>"])
+            if len(tokens) + len(input_ids) >= self.max_length:
+                break
+            input_ids.extend(tokens)
+            #. control learnable. if message role is assistant, learnable is True
+            learnable = message.get('learnable', message['role'] == 'assistant')
+            labels.extend(tokens if learnable else [self.ignore_token] * len(tokens))
+        if len(input_ids) < self.max_length and learnable:
+            input_ids.append(self.stop_token('user', learnable))
+            labels.append(self.stop_token('user', learnable))
+        elif len(input_ids) > self.max_length:
+            loguru.logger.warning(f'Input length {len(input_ids)} exceeds max length {self.max_length}')
+            input_ids = input_ids[:self.max_length]
+            labels = labels[:self.max_length]
+        if any([label >= 0 for label in labels]):
+            encoded = {'input_ids': input_ids, 'labels': labels}
+            return pickle.dumps(encoded) if self.auto_pickle else encoded
+
+    def tokenize(self, text, max_length=None):
+        """在tokenizer外部对sep_tokens进行保护映射"""
+        max_length = max_length or self.max_length
+        if max_length <= 0:
+            return []
+        pieces = [text]
+
+        pieces_ids = self.tokenizer(pieces, max_length=max_length, truncation=True)['input_ids']
+        input_ids = pieces_ids[0]
+        if len(input_ids) > max_length:
+            self.truncated += 1
+            loguru.logger.warning(f"input_ids: {len(input_ids)}, max_length: {max_length}")
+        return input_ids[:max_length]
+
+    def stop_token(self, role, learnable):
+        """停止 token，有两个关键作用:
+        1. 作为 assistant 的 next_token, 指导 LLM 停止生成
+        2. 指示外围系统接下来应该触发哪个 role 的逻辑，比如 user 或者 function
+        简单起见，user role 的停止 token 复用 eos_token_id
+        """
+        if learnable == True:
+            if role == 'user':
+                return self.tokenizer.eos_token_id
+            else:
+                return self.role_tokens[role]
+        else:
+            return self.ignore_token
+
+    def __str__(self):
+        pdir, base = os.path.split(os.path.abspath(self.tokenizer.name_or_path))
+        if pdir != '/' and base.startswith('checkpoint-'):
+            name = os.path.basename(pdir)
+        else:
+            name = base
+        return '{}(\n{}\n)'.format(self.__class__.__name__, '\n'.join([
+            '  ' + line for line in '\n'.join([
+                f'tokenizer="{name}", max_length={self.max_length},',
+                f'role_tokens={json.dumps(self.role_tokens, indent=2)},',
+                f'sep_tokens={json.dumps(self.sep_tokens, indent=2)},',
+                f'ignore_token={self.ignore_token}'
+            ]).split('\n')
+        ]))
+
+    def valid(self, example, rng=random):
+        dirty_words = ['openai', 'chatgpt', 'gpt4', 'gpt3']
+        for i, message in enumerate(example['messages']):
+            if message['role'] == 'system':
+                assert i == 0, f'System role can only act as the first message (i={i}).'
+            if message['role'] == 'user_system':
+                assert i in (0, 1), f'User system role can only act as the first or second message (i={i}).'
+                remove_prefix = '你是TeacherGPT，'
+                if message['content'].startswith(remove_prefix):
+                    message['content'] = message['content'][len(remove_prefix):]
+            if message['role'] != 'assistant':
+                dirty_words = [
+                    dirty_word for dirty_word in dirty_words
+                    if dirty_word not in message['content'].lower()
+                ]
+                if message['role'] == 'user' and rng.random() <= 0.01:
+                    message['content'] = add_noise(message['content'], rng)
+            else:
+                if any([
+                    dirty_word in message['content'].lower()
+                    for dirty_word in dirty_words + ['teachergpt']
+                ]):
+                    return False
+        return True
+
+
 if __name__ == '__main__':
-    model_path = '../../../huggingface/Phi-3.5-mini-instruct/'
+    # model_path = '../../../huggingface/Phi-3.5-mini-instruct/'
+    model_path = '../../../huggingface/Llama-3.2-1B-Instruct/'
     tokenizer = AutoTokenizer.from_pretrained(model_path, use_fast=False, trust_remote_code=True)
     print(f"model max length: {tokenizer.model_max_length}")
-    for processor_class in [GLMProcessor, Phi3Processor]:
+    for processor_class in [LlamaProcessor]:
         processor = processor_class(tokenizer)
         dataset = SupervisedDataset(
-            'experiments/v0915.json5',
+            'experiments/v1019.json5',
             processor,
             max_length=131072,
             overwrite=True,

@@ -1,13 +1,15 @@
 #!/bin/bash
 # 默认参数值
-config_path="../llm_modeling/Phi35/"
+config_path="../llm_modeling/Llama323B/"
+#config_path="../llm_modeling/Phi35/"
 #config_path="../llm_modeling/ChatGLM/"
 model_path="../../../model"
-pretrain="../../../model/Phi-3.5-mini-instruct/"
+pretrain="../../../model/Llama-3.2-3B-Instruct/"
+#pretrain="../../../model/Phi-3.5-mini-instruct/"
 #pretrain="../../../model/glm-4-9b-chat-1m/"
-exp_name="v0915"
+exp_name="v1019"
 data_file="experiments/${exp_name}.json5"
-output_dir="${model_path}/train-tree-rerank-phi35-mini/${exp_name}"
+output_dir="${model_path}/train-tree-rerank-llama32/${exp_name}"
 #output_dir="${model_path}/train-tree-rerank-glm9b/${exp_name}"
 max_length=35000
 batch_size=1

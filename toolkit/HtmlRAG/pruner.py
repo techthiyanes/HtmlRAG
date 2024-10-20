@@ -124,11 +124,11 @@ class GenHTMLPruner(Pruner):
         self.node_tokenizer = AutoTokenizer.from_pretrained(gen_model, trust_remote_code=True)
         self.log_threshold = 1e-9
 
-    def calculate_block_rankings(self, question: str, html: str, block_tree: List[Tuple]):
+    def calculate_block_rankings(self, question: str, html: str, block_tree: List[Tuple]=None):
         log_threshold = self.log_threshold
-        paths = [b[1] for b in block_tree]
         html_res = self.gen_model.generate_html_tree(self.node_tokenizer, [question], [html])
         node_tree=html_res[0]["node_tree"]
+        paths=html_res[0]["paths"]
 
         root = TokenIdNode(-1, prob=1.0, input_ids=[])
         for nidx, line in enumerate(node_tree):

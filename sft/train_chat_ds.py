@@ -30,7 +30,7 @@ from transformers.training_args import TrainingArguments
 import sys
 sys.path.append("./")
 from utils import init_logger, add_custom_callback, DistributedSampler
-from dataset import GLMProcessor, SupervisedDataset, Phi3Processor
+from dataset import GLMProcessor, SupervisedDataset, Phi3Processor, LlamaProcessor
 import torch.distributed as dist
 from transformers.trainer_utils import seed_worker
 deepspeed.init_distributed()
@@ -182,6 +182,8 @@ def train():
         processor_class=GLMProcessor
     elif "Phi" in model_args.model_name_or_path:
         processor_class=Phi3Processor
+    elif "Llama" in model_args.model_name_or_path:
+        processor_class=LlamaProcessor
     else:
         raise ValueError(f"No processor supports model {model_args.model_name_or_path}")
 

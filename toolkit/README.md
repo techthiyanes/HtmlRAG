@@ -61,8 +61,6 @@ print(simplified_html)
 ```python
 from HtmlRAG import build_block_tree
 
-# if you have mutiple HTML documents, merge them using the following code
-# simplified_html = "\n".join([clean_html(html) for html in htmls])
 block_tree, simplified_html = build_block_tree(simplified_html, max_node_words=10)
 for block in block_tree:
     print("Block Content: ", block[0])
@@ -112,25 +110,6 @@ print(pruned_html)
 # </html>
 ```
 
-### 🌲 Build a Finer Block Tree
-
-```python
-block_tree, pruned_html=build_block_tree(pruned_html, max_node_words=10)
-for block in block_tree:
-    print("Block Content: ", block[0])
-    print("Block Path: ", block[1])
-    print("Is Leaf: ", block[2])
-    print("")
-
-# Block Content:  <title>When was the bellagio in las vegas built?</title>
-# Block Path:  ['html', 'title']
-# Is Leaf:  True
-# 
-# Block Content:  <p>The Bellagio is a luxury hotel and casino located on the Las Vegas Strip in Paradise, Nevada. It was built in 1998.</p>
-# Block Path:  ['html', 'p']
-# Is Leaf:  True
-```
-    
 
 ### ✂️ Prune HTML Blocks with Generative Model
 
@@ -138,8 +117,8 @@ for block in block_tree:
 from HtmlRAG import GenHTMLPruner
 
 ckpt_path = "../../../model/train-tree-rerank-phi35-mini/v0915/checkpoint-164"
-gen_embed_pruner = GenHTMLPruner(gen_model=ckpt_path, max_node_words=5)
-block_rankings = gen_embed_pruner.calculate_block_rankings(question, pruned_html, block_tree)
+gen_embed_pruner = GenHTMLPruner(gen_model=ckpt_path, max_node_words=10)
+block_rankings = gen_embed_pruner.calculate_block_rankings(question, pruned_html)
 print(block_rankings)
 
 # [1, 0]
