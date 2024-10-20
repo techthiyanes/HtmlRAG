@@ -121,6 +121,64 @@ bash ./scripts/trim_html_tree_rerank.sh
 ```bash
 bash ./scripts/tree_rerank_tree_gen.sh
 ```
+---
+
+## 📊 Evaluation
+
+### Baselines
+
+We provide the following baselines for comparison:
+
+- **BM25**: A widely used sparse rerank model. 
+```bash
+export rerank_model="bm25"
+./scripts/rerank.sh
+./scripts/trim_html_fill_chunk.sh
+```
+
+- **[BGE](https://huggingface.co/BAAI/bge-large-en)**: An embedding model, BGE-Large-EN with encoder-only structure. Our scripts requires instantiation of an embedding model with [TEI](https://github.com/huggingface/text-embeddings-inference).
+```bash
+export rerank_model="bge"
+./scripts/rerank.sh
+./scripts/trim_html_fill_chunk.sh
+```
+- **[E5-Mistral](https://huggingface.co/intfloat/e5-mistral-7b-instruct)**: A embedding model based on an LLM, Mistral-7B.  Our scripts requires instantiation of an embedding model with [TEI](https://github.com/huggingface/text-embeddings-inference).
+```bash
+export rerank_model="e5-mistral"
+./scripts/rerank.sh
+./scripts/trim_html_fill_chunk.sh
+```
+- **LongLLMLingua**: An abstractive model using Llama7B to select useful context.
+```bash
+./scripts/longlongllmlingua.sh
+```
+- **[JinaAI Reader](https://huggingface.co/jinaai/reader-lm-1.5b)**: An end-to-end light-weight LLM with 1.5B parameters fine-tuned on an HTML to Markdown converting task dataset. 
+```bash
+./scripts/jinaai_reader.sh
+```
+### Evaluation Scripts
+
+1. Instantiaize a LLM inference model with [VLLM](https://github.com/vllm-project/vllm/). We recommend using [Llama-3.1-8B-Instruct](https://huggingface.co/meta-llama/Meta-Llama-3.1-8B-Instruct) or [Llama-3.1-70B-Instruct](https://huggingface.co/meta-llama/Meta-Llama-3.1-70B-Instruct).
+2. Run the chatting inference using the following command:
+```bash
+./scripts/chat_inference.sh
+```
+2. Follow the evaluation scripts in [eval_scrips.ipynb](./jupyter/eval_scrips.ipynb)
+
+### Results
+
+- **Results for [HTML-Pruner-Phi-3.8B]() with Llama-3.1-70B-Instruct as chat model**
+  (The fine-tuned pruner model's checkpoint will be released soon).
+
+| Dataset       | ASQA  | ASQA  | HotpotQA | NQ    | NQ    | TriviaQA | TriviaQA | MuSiQue | ELI5    | ELI5 |
+|---------------|-------|-------|----------|-------|-------|----------|----------|---------|---------|------|
+| Metrics       | EM    | Hit@1 | EM       | EM    | Hit@1 | EM       | Hit@1    | EM      | ROUGE-L | BLEU |
+| BM25          | 49.50 | 21.95 | 38.25    | 47.00 | 35.56 | 88.00    | 25.63    | 9.50    | 16.15   | 6.99 |
+| BGE           | 68.00 | 30.57 | 41.75    | 59.50 | 45.05 | 93.00    | 27.04    | 12.50   | 16.20   | 6.64 |
+| E5-Mistral    | 63.00 | 28.75 | 36.75    | 59.50 | 44.07 | 90.75    | 26.27    | 11.00   | 16.17   | 6.72 |
+| LongLLMLingua | 62.50 | 27.74 | 45.00    | 56.75 | 42.89 | 92.50    | 27.23    | 10.25   | 15.84   | 6.39 |
+| JinaAI Reader | 55.25 | 23.73 | 34.25    | 48.25 | 35.40 | 90.00    | 25.35    | 9.25    | 16.06   | 6.41 |
+| HtmlRAG       | 68.50 | 30.53 | 46.25    | 60.50 | 45.26 | 93.50    | 27.03    | 13.25   | 16.33   | 6.77 |
 
 ---
 

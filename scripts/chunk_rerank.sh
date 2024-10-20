@@ -1,10 +1,10 @@
 #!/bin/bash
 
-#datasets=("asqa" "hotpot-qa" "nq" "trivia-qa" "musique" "eli5")
-datasets=("musique" "eli5")
+datasets=("asqa" "hotpot-qa" "nq" "trivia-qa" "musique" "eli5")
+#datasets=("musique" "eli5")
 split="test"
 #rerank_model="bgelargeen"
-rerank_model="e5-mistral"
+#rerank_model="e5-mistral"
 #rerank_model="bm25"
 rewrite_method="slimplmqr"
 url="http://172.16.23.46/"

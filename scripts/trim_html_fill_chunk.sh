@@ -2,7 +2,7 @@
 
 split="test"
 #rerank_model="bgelargeen"
-rerank_model="e5-mistral"
+#rerank_model="e5-mistral"
 #rerank_model="bm25"
 rewrite_method="slimplmqr"
 chat_tokenizer_name="llama"

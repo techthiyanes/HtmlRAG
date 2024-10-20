@@ -4,7 +4,7 @@
 datasets=("asqa" "hotpot-qa" "nq" "trivia-qa" "musique" "eli5")
 #datasets=("asqa")
 #reference_formats=("html" "raw-text" "markdown" "html-simple" "bm25" "bgelargeen" "tree-rerank" "tree-rerank-tree-gen" "llmlingua" "jinaai-reader" "e5-mistral")
-reference_formats=("html-attr")
+reference_formats=("bm25" "bgelargeen" "tree-rerank" "tree-rerank-tree-gen" "llmlingua" "jinaai-reader" "e5-mistral")
 split="test"
 #chat_model="claude-3-opus-20240229"
 #chat_models=("bc34b8k" "bc34b16k" "bc34b32k" "bc34b64k" "bc34b128k" "bc34b192k")
@@ -12,7 +12,7 @@ split="test"
 #chat_models=("qwen72b8k" "qwen72b16k" "qwen72b32k" "qwen72b64k" "qwen72b128k" "qwen72b192k")
 #chat_models=("qwen72b192k")
 #chat_models=("llama70b2k" "llama70b4k" "llama70b8k" "llama70b16k" "llama70b32k")
-chat_models=("llama70b128k")
+chat_models=("llama70b4k")
 #chat_models=("llama8b2k" "llama8b4k" "llama8b8k" "llama8b16k" "llama8b32k")
 #chat_models=("llama8b128k")
 url="http://llama31-70b-vllm.search.cls-3nbemh6i.ml.baichuan-inc.com/generate"
