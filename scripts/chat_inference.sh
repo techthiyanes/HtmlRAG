@@ -4,7 +4,7 @@
 datasets=("asqa" "hotpot-qa" "nq" "trivia-qa" "musique" "eli5")
 #datasets=("asqa")
 #reference_formats=("html" "raw-text" "markdown" "html-simple" "bm25" "bgelargeen" "tree-rerank" "tree-rerank-tree-gen" "llmlingua" "jinaai-reader" "e5-mistral")
-reference_formats=("bm25" "bgelargeen" "tree-rerank" "tree-rerank-tree-gen" "llmlingua" "jinaai-reader" "e5-mistral")
+reference_formats=("tree-rerank-tree-gen")
 split="test"
 #chat_model="claude-3-opus-20240229"
 #chat_models=("bc34b8k" "bc34b16k" "bc34b32k" "bc34b64k" "bc34b128k" "bc34b192k")
@@ -23,7 +23,7 @@ multi_docs="top10"
 #multi_docs="single"
 rerank_model="bgelargeen"
 rewrite_method="slimplmqr"
-version="v0915"
+version="v1008"
 #granularity=512
 granularities=(128)
 

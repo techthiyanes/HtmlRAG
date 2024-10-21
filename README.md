@@ -5,6 +5,8 @@ We propose HtmlRAG, which uses HTML instead of plain text as the format of exter
 
 - **Two-Step Block-Tree-Based HTML Pruning**: The block-tree-based HTML pruning consists of two steps, both of which are conducted on the block tree structure. The first pruning step uses a embedding model to calculate scores for blocks, while the second step uses a path generative model. The first step processes the result of lossless HTML cleaning, while the second step processes the result of the first pruning step.
 
+![HtmlRAG](./figures/html-pipeline.pdf)
+
 ---
 
 ## 🔌 Apply HtmlRAG in your own RAG systems
