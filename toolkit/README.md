@@ -97,7 +97,7 @@ print(block_rankings)
 
 from transformers import AutoTokenizer
 
-chat_tokenizer = AutoTokenizer.from_pretrained("../../../huggingface/Meta-Llama-3.1-70B-Instruct")
+chat_tokenizer = AutoTokenizer.from_pretrained("meta-llama/Llama-3.1-70B-Instruct")
 
 max_context_window = 60
 pruned_html = embed_html_pruner.prune_HTML(simplified_html, block_tree, block_rankings, chat_tokenizer,
@@ -116,7 +116,7 @@ print(pruned_html)
 ```python
 from HtmlRAG import GenHTMLPruner
 
-ckpt_path = "../../../model/train-tree-rerank-phi35-mini/v0915/checkpoint-164"
+ckpt_path = "zstanjj/HTML-Pruner-Llama-1B"
 gen_embed_pruner = GenHTMLPruner(gen_model=ckpt_path, max_node_words=10)
 block_rankings = gen_embed_pruner.calculate_block_rankings(question, pruned_html)
 print(block_rankings)

@@ -1,4 +1,13 @@
 # <div align="center">HtmlRAG: HTML is Better Than Plain Text for Modeling Retrieval Results in RAG Systems</div>
+
+<div align="center">
+<a href="" target="_blank"><img src=https://img.shields.io/badge/arXiv-b5212f.svg?logo=arxiv></a>
+<a href="https://huggingface.co/collections/zstanjj/htmlrag-671f03af5c3da2e7b5371aa4" target="_blank"><img src=https://img.shields.io/badge/%F0%9F%A4%97%20HuggingFace%20Models-27b3b4.svg></a>
+<a href="" target="_blank"><img src=https://custom-icon-badges.demolab.com/badge/ModelScope%20Models-624aff?style=flat&logo=modelscope&logoColor=white></a>
+<a href="https://github.com/RUC-NLPIR/FlashRAG/blob/main/LICENSE"><img alt="License" src="https://img.shields.io/badge/LICENSE-MIT-green"></a>
+<a><img alt="Static Badge" src="https://img.shields.io/badge/made_with-Python-blue"></a>
+</div>
+
 We propose HtmlRAG, which uses HTML instead of plain text as the format of external knowledge in RAG systems. To tackle the long context brought by HTML, we propose **Lossless HTML Cleaning** and **Two-Step Block-Tree-Based HTML Pruning**.
 
 - **Lossless HTML Cleaning**: This cleaning process just removes totally irrelevant contents and compress redundant structures, retaining all semantic information in the original HTML. The compressed HTML of lossless HTML cleaning is suitable for RAG systems that have long-context LLMs and are not willing to loss any information before generation.
@@ -169,8 +178,7 @@ export rerank_model="e5-mistral"
 
 ### Results
 
-- **Results for [HTML-Pruner-Phi-3.8B]() with Llama-3.1-70B-Instruct as chat model**
-  (The fine-tuned pruner model's checkpoint will be released soon).
+- **Results for [HTML-Pruner-Phi-3.8B](https://huggingface.co/zstanjj/HTML-Pruner-Phi-3.8B) with Llama-3.1-70B-Instruct as chat model**.
 
 | Dataset          | ASQA      | ASQA      | HotpotQA  | NQ        | NQ        | TriviaQA  | TriviaQA  | MuSiQue   | ELI5      | ELI5     |
 |------------------|-----------|-----------|-----------|-----------|-----------|-----------|-----------|-----------|-----------|----------|
