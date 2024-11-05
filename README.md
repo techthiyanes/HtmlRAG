@@ -178,18 +178,18 @@ export rerank_model="e5-mistral"
 
 ### Results
 
-- **Results for [HTML-Pruner-Phi-3.8B](https://huggingface.co/zstanjj/HTML-Pruner-Phi-3.8B) with Llama-3.1-70B-Instruct as chat model**.
+- **Results for [HTML-Pruner-Phi-3.8B](https://huggingface.co/zstanjj/HTML-Pruner-Phi-3.8B) and [HTML-Pruner-Llama-1B](https://huggingface.co/zstanjj/HTML-Pruner-Llama-1B) with Llama-3.1-70B-Instruct as chat model**.
 
-| Dataset          | ASQA      | ASQA      | HotpotQA  | NQ        | NQ        | TriviaQA  | TriviaQA  | MuSiQue   | ELI5      | ELI5     |
-|------------------|-----------|-----------|-----------|-----------|-----------|-----------|-----------|-----------|-----------|----------|
-| Metrics          | EM        | Hit@1     | EM        | EM        | Hit@1     | EM        | Hit@1     | EM        | ROUGE-L   | BLEU     |
-| BM25             | 49.50     | 21.95     | 38.25     | 47.00     | 35.56     | 88.00     | 25.63     | 9.50      | 16.15     | **6.99** |
-| BGE              | 68.00     | **30.57** | 41.75     | 59.50     | 45.05     | 93.00     | **27.04** | 12.50     | 16.20     | 6.64     |
-| E5-Mistral       | 63.00     | 28.75     | 36.75     | 59.50     | 44.07     | 90.75     | 26.27     | 11.00     | 16.17     | 6.72     |
-| LongLLMLingua    | 62.50     | 27.74     | 45.00     | 56.75     | 42.89     | 92.50     | 27.23     | 10.25     | 15.84     | 6.39     |
-| JinaAI Reader    | 55.25     | 23.73     | 34.25     | 48.25     | 35.40     | 90.00     | 25.35     | 9.25      | 16.06     | 6.41     |
-| HtmlRAG-Phi-3.8B | **68.50** | 30.53     | **46.25** | 60.50     | 45.26     | **93.50** | 27.03     | **13.25** | **16.33** | 6.77     |
-| HtmlRAG-Llama-1B | 66.50     | **30.76** | 45.00     | **60.75** | **46.63** | 93.00     | 26.97     | 10.00     | 16.25     | 6.70     |
+| Dataset          | ASQA      | HotpotQA  | NQ        | TriviaQA  | MuSiQue   | ELI5      |
+|------------------|-----------|-----------|-----------|-----------|-----------|-----------|
+| Metrics          | EM        | EM        | EM        | EM        | EM        | ROUGE-L   |
+| BM25             | 49.50     | 38.25     | 47.00     | 88.00     | 9.50      | 16.15     |
+| BGE              | 68.00     | 41.75     | 59.50     | 93.00     | 12.50     | 16.20     |
+| E5-Mistral       | 63.00     | 36.75     | 59.50     | 90.75     | 11.00     | 16.17     |
+| LongLLMLingua    | 62.50     | 45.00     | 56.75     | 92.50     | 10.25     | 15.84     |
+| JinaAI Reader    | 55.25     | 34.25     | 48.25     | 90.00     | 9.25      | 16.06     |
+| HtmlRAG-Phi-3.8B | **68.50** | **46.25** | 60.50     | **93.50** | **13.25** | **16.33** |
+| HtmlRAG-Llama-1B | 66.50     | 45.00     | **60.75** | 93.00     | 10.00     | 16.25     |
 
 ---
 
