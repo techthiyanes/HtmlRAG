@@ -17,7 +17,7 @@ pip install -e .
 ### 🧹 HTML Cleaning
 
 ```python
-from HtmlRAG import clean_html
+from htmlrag import clean_html
 
 question = "When was the bellagio in las vegas built?"
 html = """
@@ -59,7 +59,7 @@ print(simplified_html)
 ### 🌲 Build Block Tree
 
 ```python
-from HtmlRAG import build_block_tree
+from htmlrag import build_block_tree
 
 block_tree, simplified_html = build_block_tree(simplified_html, max_node_words=10)
 for block in block_tree:
@@ -87,7 +87,7 @@ for block in block_tree:
 ### ✂️ Prune HTML Blocks with Embedding Model
 
 ```python
-from HtmlRAG import EmbedHTMLPruner
+from htmlrag import EmbedHTMLPruner
 
 embed_html_pruner = EmbedHTMLPruner(embed_model="bm25")
 block_rankings = embed_html_pruner.calculate_block_rankings(question, simplified_html, block_tree)
@@ -114,7 +114,7 @@ print(pruned_html)
 ### ✂️ Prune HTML Blocks with Generative Model
 
 ```python
-from HtmlRAG import GenHTMLPruner
+from htmlrag import GenHTMLPruner
 
 ckpt_path = "zstanjj/HTML-Pruner-Llama-1B"
 gen_embed_pruner = GenHTMLPruner(gen_model=ckpt_path, max_node_words=10)
