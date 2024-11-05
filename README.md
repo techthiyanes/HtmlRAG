@@ -5,7 +5,7 @@ We propose HtmlRAG, which uses HTML instead of plain text as the format of exter
 
 - **Two-Step Block-Tree-Based HTML Pruning**: The block-tree-based HTML pruning consists of two steps, both of which are conducted on the block tree structure. The first pruning step uses a embedding model to calculate scores for blocks, while the second step uses a path generative model. The first step processes the result of lossless HTML cleaning, while the second step processes the result of the first pruning step.
 
-![HtmlRAG](./figures/html-pipeline.pdf)
+![HtmlRAG](./figures/html-pipeline.png)
 
 ---
 
@@ -172,16 +172,16 @@ export rerank_model="e5-mistral"
 - **Results for [HTML-Pruner-Phi-3.8B]() with Llama-3.1-70B-Instruct as chat model**
   (The fine-tuned pruner model's checkpoint will be released soon).
 
-| Dataset       | ASQA      | ASQA      | HotpotQA  | NQ        | NQ        | TriviaQA  | TriviaQA  | MuSiQue   | ELI5      | ELI5     |
-|---------------|-----------|-----------|-----------|-----------|-----------|-----------|-----------|-----------|-----------|----------|
-| Metrics       | EM        | Hit@1     | EM        | EM        | Hit@1     | EM        | Hit@1     | EM        | ROUGE-L   | BLEU     |
-| BM25          | 49.50     | 21.95     | 38.25     | 47.00     | 35.56     | 88.00     | 25.63     | 9.50      | 16.15     | **6.99** |
-| BGE           | 68.00     | **30.57** | 41.75     | 59.50     | 45.05     | 93.00     | **27.04** | 12.50     | 16.20     | 6.64     |
-| E5-Mistral    | 63.00     | 28.75     | 36.75     | 59.50     | 44.07     | 90.75     | 26.27     | 11.00     | 16.17     | 6.72     |
-| LongLLMLingua | 62.50     | 27.74     | 45.00     | 56.75     | 42.89     | 92.50     | 27.23     | 10.25     | 15.84     | 6.39     |
-| JinaAI Reader | 55.25     | 23.73     | 34.25     | 48.25     | 35.40     | 90.00     | 25.35     | 9.25      | 16.06     | 6.41     |
-| HtmlRAG       | **68.50** | 30.53     | **46.25** | **60.50** | **45.26** | **93.50** | 27.03     | **13.25** | **16.33** | 6.77     |
-
+| Dataset          | ASQA      | ASQA      | HotpotQA  | NQ        | NQ        | TriviaQA  | TriviaQA  | MuSiQue   | ELI5      | ELI5     |
+|------------------|-----------|-----------|-----------|-----------|-----------|-----------|-----------|-----------|-----------|----------|
+| Metrics          | EM        | Hit@1     | EM        | EM        | Hit@1     | EM        | Hit@1     | EM        | ROUGE-L   | BLEU     |
+| BM25             | 49.50     | 21.95     | 38.25     | 47.00     | 35.56     | 88.00     | 25.63     | 9.50      | 16.15     | **6.99** |
+| BGE              | 68.00     | **30.57** | 41.75     | 59.50     | 45.05     | 93.00     | **27.04** | 12.50     | 16.20     | 6.64     |
+| E5-Mistral       | 63.00     | 28.75     | 36.75     | 59.50     | 44.07     | 90.75     | 26.27     | 11.00     | 16.17     | 6.72     |
+| LongLLMLingua    | 62.50     | 27.74     | 45.00     | 56.75     | 42.89     | 92.50     | 27.23     | 10.25     | 15.84     | 6.39     |
+| JinaAI Reader    | 55.25     | 23.73     | 34.25     | 48.25     | 35.40     | 90.00     | 25.35     | 9.25      | 16.06     | 6.41     |
+| HtmlRAG-Phi-3.8B | **68.50** | 30.53     | **46.25** | 60.50     | 45.26     | **93.50** | 27.03     | **13.25** | **16.33** | 6.77     |
+| HtmlRAG-Llama-1B | 66.50     | **30.76** | 45.00     | **60.75** | **46.63** | 93.00     | 26.97     | 10.00     | 16.25     | 6.70     |
 
 ---
 

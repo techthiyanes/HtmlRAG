@@ -252,6 +252,7 @@ class SupervisedDataset(Dataset):
                     infos.append((file, len(examples), rate))
 
         # self._log_memory(f'Loaded {len(examples)} examples from {self.data_file}')
+        # exit(-1)
         return examples, infos
 
     def _split_and_pack(self, indice, rng, max_try=100):
@@ -888,13 +889,13 @@ class LlamaProcessor:
 
 if __name__ == '__main__':
     # model_path = '../../../huggingface/Phi-3.5-mini-instruct/'
-    model_path = '../../../huggingface/Llama-3.2-1B-Instruct/'
+    model_path = '/train_data_load/huggingface/tjj_hf/Llama-3.2-1B-Instruct/'
     tokenizer = AutoTokenizer.from_pretrained(model_path, use_fast=False, trust_remote_code=True)
     print(f"model max length: {tokenizer.model_max_length}")
     for processor_class in [LlamaProcessor]:
         processor = processor_class(tokenizer)
         dataset = SupervisedDataset(
-            'experiments/v1019.json5',
+            'experiments/tjj_chat_v1103.json5',
             processor,
             max_length=131072,
             overwrite=True,
