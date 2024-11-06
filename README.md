@@ -1,9 +1,9 @@
 # <div align="center">HtmlRAG: HTML is Better Than Plain Text for Modeling Retrieval Results in RAG Systems</div>
 
 <div align="center">
-<a href="" target="_blank"><img src=https://img.shields.io/badge/arXiv-b5212f.svg?logo=arxiv></a>
+<a href="https://arxiv.org/abs/2411.02959" target="_blank"><img src=https://img.shields.io/badge/arXiv-b5212f.svg?logo=arxiv></a>
 <a href="https://huggingface.co/collections/zstanjj/htmlrag-671f03af5c3da2e7b5371aa4" target="_blank"><img src=https://img.shields.io/badge/%F0%9F%A4%97%20HuggingFace%20Models-27b3b4.svg></a>
-<a href="" target="_blank"><img src=https://custom-icon-badges.demolab.com/badge/ModelScope%20Models-624aff?style=flat&logo=modelscope&logoColor=white></a>
+<a href="https://modelscope.cn/models/zstanjj/HTML-Pruner-Llama-1B" target="_blank"><img src=https://custom-icon-badges.demolab.com/badge/ModelScope%20Models-624aff?style=flat&logo=modelscope&logoColor=white></a>
 <a href="https://github.com/plageon/HtmlRAG/blob/main/toolkit/LICENSE"><img alt="License" src="https://img.shields.io/badge/LICENSE-MIT-green"></a>
 <a><img alt="Static Badge" src="https://img.shields.io/badge/made_with-Python-blue"></a>
 </div>
@@ -217,5 +217,20 @@ You can follow our settings if you are training on A800 clusters.
 bash ./scripts/train_longctx.sh
 ```
 
+---
+
+## 📜 Citation
+
+```bibtex
+@misc{tan2024htmlraghtmlbetterplain,
+      title={HtmlRAG: HTML is Better Than Plain Text for Modeling Retrieved Knowledge in RAG Systems}, 
+      author={Jiejun Tan and Zhicheng Dou and Wen Wang and Mang Wang and Weipeng Chen and Ji-Rong Wen},
+      year={2024},
+      eprint={2411.02959},
+      archivePrefix={arXiv},
+      primaryClass={cs.IR},
+      url={https://arxiv.org/abs/2411.02959}, 
+}
+```
 
 
