@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "htmlrag"
-version = "0.0.1"
+version = "0.0.3"
 authors = [
   { name="Example Author", email="author@example.com" },
 ]
@@ -23,6 +23,7 @@ dependencies = [
     "pydantic-settings",
     "bs4",
     "transformers",
+    "sentence-transformers",
     "torch",
     "numpy",
     "langchain",
@@ -30,15 +31,16 @@ dependencies = [
     "langchain-huggingface",
     "anytree",
     "langchain-community >= 0.3.0",
+    "faiss-cpu",
 ]
 
 [project.urls]
-Homepage = "https://github.com/pypa/sampleproject"
-Issues = "https://github.com/pypa/sampleproject/issues"
+Homepage = "https://github.com/plageon/HtmlRAG"
+Issues = "https://github.com/plageon/HtmlRAG/issues"
 
 [tool.setuptools.packages.find]
 # All the following settings are optional:
 where = ["."]
-include = ["HtmlRAG"]
+include = ["htmlrag"]
 exclude = ["tests"]
 namespaces = true

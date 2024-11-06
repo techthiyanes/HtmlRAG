@@ -1,8 +1,8 @@
-from langchain_community.vectorstores import FAISS
+
 from langchain_core.documents import Document
 import bs4
 from .html_utils import trim_path, simplify_html, truncate_input, TokenIdNode
-from langchain_community.retrievers import BM25Retriever
+
 import json
 from typing import List, Tuple
 
@@ -72,20 +72,22 @@ class Pruner:
 
 class EmbedHTMLPruner(Pruner):
 
-    def __init__(self, embed_model="bm25", url=""):
-        self.embed_model = embed_model
-        if embed_model == "bm25":
-            self.embedder=None
-            self.query_instruction_for_retrieval = ""
-        else:
-            if embed_model == "bgelargeen":
-                self.query_instruction_for_retrieval = "Represent this sentence for searching relevant passages: "
-            elif embed_model == "e5-mistral":
-                self.query_instruction_for_retrieval = "Instruct: Given a web search query, retrieve relevant passages that answer the query\nQuery: "
-            from langchain_huggingface import HuggingFaceEndpointEmbeddings
+    def __init__(self, embed_model="BAAI/bge-large-en", local_inference=True, query_instruction_for_retrieval="", endpoint=""):
+        self.query_instruction_for_retrieval = ""
+        if embed_model == "BAAI/bge-large-en":
+            self.query_instruction_for_retrieval = "Represent this sentence for searching relevant passages: "
+        elif embed_model == "intfloat/e5-mistral-7b-instruct":
+            self.query_instruction_for_retrieval = "Instruct: Given a web search query, retrieve relevant passages that answer the query\nQuery: "
+        if query_instruction_for_retrieval:
+            self.query_instruction_for_retrieval = query_instruction_for_retrieval
 
+        if local_inference:
+            from langchain_huggingface import HuggingFaceEmbeddings
+            self.embedder = HuggingFaceEmbeddings(model_name=embed_model)
+        else:
+            from langchain_huggingface import HuggingFaceEndpointEmbeddings
             embedder = HuggingFaceEndpointEmbeddings(
-                model=url,
+                model=endpoint,
                 huggingfacehub_api_token="a-default-token",
                 model_kwargs={"truncate": True})
             self.embedder = embedder
@@ -101,14 +103,29 @@ class EmbedHTMLPruner(Pruner):
             node_docs.append(Document(page_content=path_tags[pidx].get_text(), metadata={"path_idx": pidx}))
         batch_size = 256
 
-        if self.embed_model == "bm25":
-            retriever=BM25Retriever.from_documents(node_docs)
-        else:
-            db = FAISS.from_documents(node_docs[:batch_size], self.embedder)
-            if len(node_docs) > batch_size:
-                for doc_batch_idx in range(batch_size, len(node_docs), batch_size):
-                    db.add_documents(node_docs[doc_batch_idx:doc_batch_idx + batch_size])
-            retriever = db.as_retriever(search_kwargs={"k": len(node_docs)})
+        from langchain_community.vectorstores import FAISS
+        db = FAISS.from_documents(node_docs[:batch_size], self.embedder)
+        if len(node_docs) > batch_size:
+            for doc_batch_idx in range(batch_size, len(node_docs), batch_size):
+                db.add_documents(node_docs[doc_batch_idx:doc_batch_idx + batch_size])
+        retriever = db.as_retriever(search_kwargs={"k": len(node_docs)})
+        ranked_docs = retriever.invoke(question)
+        block_rankings = [doc.metadata["path_idx"] for doc in ranked_docs]
+
+        return block_rankings
+
+
+class BM25HTMLPruner(Pruner):
+    def calculate_block_rankings(self, question: str, html: str, block_tree: List[Tuple]):
+        path_tags = [b[0] for b in block_tree]
+        paths = [b[1] for b in block_tree]
+
+        node_docs = []
+        for pidx in range(len(paths)):
+            node_docs.append(Document(page_content=path_tags[pidx].get_text(), metadata={"path_idx": pidx}))
+        from langchain_community.retrievers import BM25Retriever
+        retriever = BM25Retriever.from_documents(node_docs)
+        retriever.from_documents(node_docs)
         ranked_docs = retriever.invoke(question)
         block_rankings = [doc.metadata["path_idx"] for doc in ranked_docs]
 

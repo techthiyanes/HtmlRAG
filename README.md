@@ -8,6 +8,11 @@
 <a><img alt="Static Badge" src="https://img.shields.io/badge/made_with-Python-blue"></a>
 </div>
 
+## ✨ Latest News
+
+- [11/06/2024]: Our paper is available on arXiv. You can access it [here](https://arxiv.org/abs/2411.02959).
+- [11/05/2024]: The open-source toolkit and models are released. You can apply HtmlRAG in your own RAG systems now.
+
 We propose HtmlRAG, which uses HTML instead of plain text as the format of external knowledge in RAG systems. To tackle the long context brought by HTML, we propose **Lossless HTML Cleaning** and **Two-Step Block-Tree-Based HTML Pruning**.
 
 - **Lossless HTML Cleaning**: This cleaning process just removes totally irrelevant contents and compress redundant structures, retaining all semantic information in the original HTML. The compressed HTML of lossless HTML cleaning is suitable for RAG systems that have long-context LLMs and are not willing to loss any information before generation.
@@ -24,6 +29,11 @@ We provide a simple tookit to apply HtmlRAG in your own RAG systems.
 
 ### 📦 Installation
 
+Install the package using pip:
+```bash
+pip install htmlrag
+```
+Or install the package from source:
 ```bash
 cd toolkit/
 pip install -e .
