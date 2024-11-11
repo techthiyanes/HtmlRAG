@@ -3,13 +3,14 @@
 <div align="center">
 <a href="https://arxiv.org/abs/2411.02959" target="_blank"><img src=https://img.shields.io/badge/arXiv-b5212f.svg?logo=arxiv></a>
 <a href="https://huggingface.co/collections/zstanjj/htmlrag-671f03af5c3da2e7b5371aa4" target="_blank"><img src=https://img.shields.io/badge/%F0%9F%A4%97%20HuggingFace%20Models-27b3b4.svg></a>
-<a href="https://modelscope.cn/models/zstanjj/HTML-Pruner-Llama-1B" target="_blank"><img src=https://custom-icon-badges.demolab.com/badge/ModelScope%20Models-624aff?style=flat&logo=modelscope&logoColor=white></a>
+<a href="https://www.modelscope.cn/collections/HtmlRAG-c290f7cf673648" target="_blank"><img src=https://custom-icon-badges.demolab.com/badge/ModelScope%20Models-624aff?style=flat&logo=modelscope&logoColor=white></a>
 <a href="https://github.com/plageon/HtmlRAG/blob/main/toolkit/LICENSE"><img alt="License" src="https://img.shields.io/badge/LICENSE-MIT-green"></a>
 <a><img alt="Static Badge" src="https://img.shields.io/badge/made_with-Python-blue"></a>
 </div>
 
 ## ✨ Latest News
 
+- [11/12/2024]: Our data and model are now available on ModelScope. You can access them [here](https://www.modelscope.cn/collections/HtmlRAG-c290f7cf673648) for faster downloading.
 - [11/11/2024]: The training and test data are now available in the huggingface dataset [HtmlRAG-train](https://huggingface.co/datasets/zstanjj/HtmlRAG-train) and [HtmlRAG-test](https://huggingface.co/datasets/zstanjj/HtmlRAG-test).
 - [11/07/2024]: The latest version of htmlrag package is v0.0.3, which is available on pypi. You can install it by running `pip install htmlrag==0.0.3`.
 - [11/06/2024]: Our paper is available on arXiv. You can access it [here](https://arxiv.org/abs/2411.02959).
