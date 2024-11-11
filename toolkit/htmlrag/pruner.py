@@ -26,6 +26,9 @@ class Pruner:
             paths[path_idx]["ranking"] = idj
 
         soup = bs4.BeautifulSoup(html, 'html.parser')
+        #  sort paths by ranking
+        paths = sorted(paths, key=lambda x: x["ranking"])
+        total_token_length = 0
         for idj in range(len(paths)):
             path = paths[idj]["path"]
             tag = soup
@@ -35,12 +38,13 @@ class Pruner:
                         if child.name == p:
                             tag = child
                             break
-
+            assert tag.name == path[-1], f"tag name: {tag.name}, path[-1]: {path[-1]}"
             paths[idj]["tag"] = tag
             paths[idj]["token_length"] = len(chat_tokenizer.encode(str(tag), add_special_tokens=False))
-        #  sort paths by ranking
-        paths = sorted(paths, key=lambda x: x["ranking"])
-        total_token_length = sum([p["token_length"] for p in paths])
+            total_token_length += paths[idj]["token_length"]
+            if total_token_length > max_context_window:
+                paths = paths[:idj+1]
+                break
 
         #  remove low ranking paths
         while total_token_length > max_context_window:
@@ -124,8 +128,8 @@ class BM25HTMLPruner(Pruner):
         for pidx in range(len(paths)):
             node_docs.append(Document(page_content=path_tags[pidx].get_text(), metadata={"path_idx": pidx}))
         from langchain_community.retrievers import BM25Retriever
-        retriever = BM25Retriever.from_documents(node_docs)
-        retriever.from_documents(node_docs)
+        retriever = BM25Retriever.from_documents(documents=node_docs)
+        retriever.k = len(node_docs)
         ranked_docs = retriever.invoke(question)
         block_rankings = [doc.metadata["path_idx"] for doc in ranked_docs]
 

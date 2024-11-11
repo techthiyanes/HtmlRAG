@@ -170,6 +170,7 @@ if __name__ == "__main__":
                 doc.metadata["chunk_index"] = i
             if embedder is None:
                 retriever=BM25Retriever.from_documents(docs)
+                retriever.k = len(docs)
             else:
                 batch_size = 256
                 # print(f"indexing {len(docs)} chunks")

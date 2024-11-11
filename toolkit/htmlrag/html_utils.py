@@ -224,7 +224,7 @@ def build_block_tree(html: str, max_node_words: int=512) -> Tuple[List[Tuple[bs4
                 new_tag.append(child)
             target_trees = [(new_tag, ["html"], True)]
 
-        html=str(soup)
+    html=str(soup)
     return target_trees, html
 
 

@@ -4,9 +4,9 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "htmlrag"
-version = "0.0.3"
+version = "0.0.4"
 authors = [
-  { name="Example Author", email="author@example.com" },
+  { name="zstanjj", email="zstanjj@gmail.com" },
 ]
 description = "A small toolkit for HTML cleaning and pruning for RAG systems."
 readme = "README.md"
