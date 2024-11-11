@@ -10,6 +10,7 @@
 
 ## ✨ Latest News
 
+- [11/11/2024]: The training and test data are now available in the huggingface dataset [HtmlRAG-train](https://huggingface.co/datasets/zstanjj/HtmlRAG-train) and [HtmlRAG-test](https://huggingface.co/datasets/zstanjj/HtmlRAG-test).
 - [11/06/2024]: Our paper is available on arXiv. You can access it [here](https://arxiv.org/abs/2411.02959).
 - [11/05/2024]: The open-source toolkit and models are released. You can apply HtmlRAG in your own RAG systems now.
 
@@ -72,11 +73,11 @@ pip install scikit-learn transformers transformers[deepspeed] rouge_score evalua
 
 2. We apply query rewriting to extract sub-queries and Bing search to retrieve relevant URLs for each querys, and then we scrap static HTML documents through URLs in returned search results. 
 Original webpages are stored in the [html_data](./html_data) folder. 
-Due to git file size limitation, we only provide a small subset of test data in this repository. The full processed data will be released soon.
+Due to git file size limitation, we only provide a small subset of test data in this repository. The full processed data is available in huggingface dataset [HtmlRAG-test](https://huggingface.co/datasets/zstanjj/HtmlRAG-test).
 
-|  Dataset   |                       ASQA                        |                             HotpotQA                             |                     NQ                      |                             TriviaQA                             |                          MuSiQue                           |                       ELI5                        |
-|:----------:|:-------------------------------------------------:|:----------------------------------------------------------------:|:-------------------------------------------:|:----------------------------------------------------------------:|:----------------------------------------------------------:|:-------------------------------------------------:|
-| Query Data |               [asqa-test.jsonl](html_data/asqa/asqa-test.jsonl)                | [hotpot-qa-test.jsonl](html_data/hotpot-qa/hotpot-qa-test.jsonl) | [nq-test.jsonl](html_data/nq/nq-test.jsonl) | [trivia-qa-test.jsonl](html_data/trivia-qa/trivia-qa-test.jsonl) | [musique-test.jsonl](html_data/musique/musique-test.jsonl) | [eli5-test.jsonl](html_data/eli5/eli5-test.jsonl) |
+|  Dataset   |                                     ASQA                                     |                                        HotpotQA                                        |                                    NQ                                    |                                        TriviaQA                                        |                                      MuSiQue                                       |                                     ELI5                                     |
+|:----------:|:----------------------------------------------------------------------------:|:--------------------------------------------------------------------------------------:|:------------------------------------------------------------------------:|:--------------------------------------------------------------------------------------:|:----------------------------------------------------------------------------------:|:----------------------------------------------------------------------------:|
+| Query Data |              [asqa-test.jsonl](html_data/asqa/asqa-test.jsonl)               |            [hotpot-qa-test.jsonl](html_data/hotpot-qa/hotpot-qa-test.jsonl)            |               [nq-test.jsonl](html_data/nq/nq-test.jsonl)                |            [trivia-qa-test.jsonl](html_data/trivia-qa/trivia-qa-test.jsonl)            |             [musique-test.jsonl](html_data/musique/musique-test.jsonl)             |              [eli5-test.jsonl](html_data/eli5/eli5-test.jsonl)               |
 | HTML Data  | [html-sample](html_data/asqa/bing/binghtml-slimplmqr-asqa-test-sample.jsonl) | [html-sample](html_data/hotpot-qa/bing/binghtml-slimplmqr-hotpot-qa-test-sample.jsonl) | [html-sample](html_data/nq/bing/binghtml-slimplmqr-nq-test-sample.jsonl) | [html-sample](html_data/trivia-qa/bing/binghtml-slimplmqr-trivia-qa-test-sample.jsonl) | [html-sample](html_data/musique/bing/binghtml-slimplmqr-musique-test-sample.jsonl) | [html-sample](html_data/eli5/bing/binghtml-slimplmqr-eli5-test-sample.jsonl) |
 
    
@@ -209,11 +210,22 @@ export rerank_model="e5-mistral"
 
 ```bash
 mkdir ../../huggingface
+cd ../../huggingface  
 huggingface-cli download --resume-download --local-dir-use-symlinks False microsoft/Phi-3.5-mini-instruct --path ../../huggingface/Phi-3.5-mini-instruct/
+
+# alternatively you can download Llama-3.2-1B as the base model
+huggingface-cli download --resume-download --local-dir-use-symlinks False meta-llama/Llama-3.2-1B --path ../../huggingface/Llama-3.2-1B/
 ```
 
 ### 2. Configure training data
+We release the training data in the huggingface dataset [HtmlRAG-train](https://huggingface.co/datasets/zstanjj/HtmlRAG-train). You can download the dataset by running the following command:
+```bash
+mkdir html_data/tree_gen
+cd html_data/tree_gen
+huggingface-cli download --resume-download --local-dir-use-symlinks False zstanjj/HtmlRAG-train --path HtmlRAG-train
+```
 
+Configure the sample rate in a `.json5` file, and we provide our default settings in [sample-train.json5](sft/experiments/sample-train.json5). Can you can check your training data with the following command:
 ```bash
 cd sft/
 python dataset.py

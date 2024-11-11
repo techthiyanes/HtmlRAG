@@ -1,7 +1,7 @@
 {
     train_files: {
         // root: 所有数据文件的根目录
-        root: '/data_train/search/InternData/jiejuntan/python/html4rag/html_data/treegen/v0915/',
+        root: '../html_data/treegen/HtmlRAG-train/',
         sample_rate: {
             // key: 数据文件相对路径，支持通配符*，数据格式支持 json 和 jsonl
             // value: 采样倍率，0.？代表下采样，1代表不采样，>1代表上采样。
