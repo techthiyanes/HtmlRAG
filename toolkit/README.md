@@ -138,9 +138,14 @@ print(pruned_html)
 
 ```python
 from htmlrag import GenHTMLPruner
+import torch
 
 ckpt_path = "zstanjj/HTML-Pruner-Llama-1B"
-gen_embed_pruner = GenHTMLPruner(gen_model=ckpt_path, max_node_words=10)
+if torch.cuda.is_available():
+    device="cuda"
+else:
+    device="cpu"
+gen_embed_pruner = GenHTMLPruner(gen_model=ckpt_path, max_node_words=5, device=device)
 block_rankings = gen_embed_pruner.calculate_block_rankings(question, pruned_html)
 print(block_rankings)
 
