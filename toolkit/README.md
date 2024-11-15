@@ -151,6 +151,21 @@ print(block_rankings)
 
 # [1, 0]
 
+block_tree, pruned_html=build_block_tree(pruned_html, max_node_words=10)
+for block in block_tree:
+    print("Block Content: ", block[0])
+    print("Block Path: ", block[1])
+    print("Is Leaf: ", block[2])
+    print("")
+    
+# Block Content:  <title>When was the bellagio in las vegas built?</title>
+# Block Path:  ['html', 'title']
+# Is Leaf:  True
+# 
+# Block Content:  <p>The Bellagio is a luxury hotel and casino located on the Las Vegas Strip in Paradise, Nevada. It was built in 1998.</p>
+# Block Path:  ['html', 'p']
+# Is Leaf:  True
+
 max_context_window = 32
 pruned_html = gen_embed_pruner.prune_HTML(pruned_html, block_tree, block_rankings, chat_tokenizer, max_context_window)
 print(pruned_html)
