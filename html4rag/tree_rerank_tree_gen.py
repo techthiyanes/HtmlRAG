@@ -13,7 +13,7 @@ import traceback
 import sys
 
 sys.path.append("./")
-from html4rag.html_utils import trim_html_tree
+from html4rag.html_utils import trim_html_tree, split_tree
 
 if __name__ == "__main__":
     argparser = argparse.ArgumentParser()
@@ -129,7 +129,9 @@ if __name__ == "__main__":
                 data_line = data_lines.pop(0)
                 question = data_line['question']
                 coarse_html_trim = data_line["html_trim"]
-                html_res = shard_pool[rank].generate_html_tree(node_tokenizer, [question], [coarse_html_trim])
+                soup=bs4.BeautifulSoup(coarse_html_trim, "html.parser")
+                block_tree=split_tree(soup,max_node_words=max_node_words)
+                html_res = shard_pool[rank].generate_html_tree(node_tokenizer, [question], [coarse_html_trim], [block_tree])
                 # loguru.logger.info(f"Calculate probs for {len(html_res[0]['path_probs'])} nodes")
                 data_line.pop(f'{rewrite_method}_results', None)
                 data_line.pop(f'{rewrite_method}_rewrite', None)
