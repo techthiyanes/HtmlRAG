@@ -10,9 +10,9 @@
 
 ## ✨ Latest News
 
+- [12/12/2024]: The latest version of htmlrag package is v0.0.5, which now supports Chinese HTML documents. You can install it by running `pip install htmlrag==0.0.5`.
 - [11/12/2024]: Our data and model are now available on ModelScope. You can access them [here](https://www.modelscope.cn/collections/HtmlRAG-c290f7cf673648) for faster downloading.
 - [11/11/2024]: The training and test data are now available in the huggingface dataset [HtmlRAG-train](https://huggingface.co/datasets/zstanjj/HtmlRAG-train) and [HtmlRAG-test](https://huggingface.co/datasets/zstanjj/HtmlRAG-test).
-- [11/11/2024]: The latest version of htmlrag package is v0.0.4, which is available on pypi. You can install it by running `pip install htmlrag==0.0.4`.
 - [11/06/2024]: Our paper is available on arXiv. You can access it [here](https://arxiv.org/abs/2411.02959).
 - [11/05/2024]: The open-source toolkit and models are released. You can apply HtmlRAG in your own RAG systems now.
 
