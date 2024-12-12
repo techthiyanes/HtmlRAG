@@ -147,7 +147,7 @@ class GenHTMLPruner(Pruner):
 
     def calculate_block_rankings(self, question: str, html: str, block_tree: List[Tuple]=None):
         log_threshold = self.log_threshold
-        html_res = self.gen_model.generate_html_tree(self.node_tokenizer, [question], [html])
+        html_res = self.gen_model.generate_html_tree(self.node_tokenizer, [question], [html], [block_tree])
         node_tree=html_res[0]["node_tree"]
         paths=html_res[0]["paths"]
 

@@ -165,9 +165,9 @@ class TokenIdNode(Node):
         self.prob = kwargs.get('prob', np.float32(0.0))
 
 
-def build_block_tree(html: str, max_node_words: int=512) -> Tuple[List[Tuple[bs4.element.Tag, List[str], bool]], str]:
+def build_block_tree(html: str, max_node_words: int=512, zh_char=False) -> Tuple[List[Tuple[bs4.element.Tag, List[str], bool]], str]:
     soup = bs4.BeautifulSoup(html, 'html.parser')
-    word_count = len(soup.get_text().split())
+    word_count = len(soup.get_text()) if zh_char else len(soup.get_text().split())
     if word_count > max_node_words:
         possible_trees = [(soup, [])]
         target_trees = []  # [(tag, path, is_leaf)]
@@ -196,14 +196,14 @@ def build_block_tree(html: str, max_node_words: int=512) -> Tuple[List[Tuple[bs4
                         child.name = new_name
                     else:
                         new_tree = (child, tree[1] + [child.name])
-                    word_count = len(child.get_text().split())
+                    word_count = len(child.get_text()) if zh_char else len(child.get_text().split())
                     #  add node with more than max_node_words words, and recursion depth is less than 64
                     if word_count > max_node_words and len(new_tree[1]) < 64:
                         possible_trees.append(new_tree)
                     else:
                         target_trees.append((new_tree[0], new_tree[1], True))
                 else:
-                    bare_word_count += len(str(child).split())
+                    bare_word_count += len(str(child)) if zh_char else len(str(child).split())
 
             #  add leaf node
             if len(tag_children) == 0:

@@ -55,6 +55,11 @@ document.write("Hello World!");
 </html>
 """
 
+#. alternatively you can read html files and merge them
+# html_files=["/path/to/html/file1.html", "/path/to/html/file2.html"]
+# htmls=[open(file).read() for file in html_files]
+# html = "\n".join(htmls)
+
 simplified_html = clean_html(html)
 print(simplified_html)
 
@@ -94,6 +99,7 @@ MAX_CONTEXT_WINDOW_GEN = 32
 from htmlrag import build_block_tree
 
 block_tree, simplified_html = build_block_tree(simplified_html, max_node_words=MAX_NODE_WORDS_EMBED)
+# block_tree, simplified_html=build_block_tree(simplified_html, max_node_words=MAX_NODE_WORDS_GEN, zh_char=True) # for Chinese text
 for block in block_tree:
     print("Block Content: ", block[0])
     print("Block Path: ", block[1])
@@ -162,6 +168,7 @@ import torch
 
 # construct a finer block tree
 block_tree, pruned_html=build_block_tree(pruned_html, max_node_words=MAX_NODE_WORDS_GEN)
+# block_tree, pruned_html=build_block_tree(pruned_html, max_node_words=MAX_NODE_WORDS_GEN, zh_char=True) # for Chinese text
 for block in block_tree:
     print("Block Content: ", block[0])
     print("Block Path: ", block[1])

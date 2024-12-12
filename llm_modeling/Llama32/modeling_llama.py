@@ -112,66 +112,6 @@ class TokenIdNode(Node):
         self.input_ids = kwargs.get('input_ids', [])
         self.prob = kwargs.get('prob', np.float32(0.0))
 
-
-def split_tree(soup: bs4.BeautifulSoup, max_node_words=0) -> List[Tuple[bs4.element.Tag, List[str], bool]]:
-    word_count = len(soup.get_text().split())
-    if word_count > max_node_words:
-        possible_trees = [(soup, [])]
-        target_trees = []  # [(tag, path, is_leaf)]
-        #  split the entire dom tee into subtrees, until the length of the subtree is less than max_node_words words
-        #  find all possible trees
-        while True:
-            if len(possible_trees) == 0:
-                break
-            tree = possible_trees.pop(0)
-            tag_children = defaultdict(int)
-            bare_word_count = 0
-            #  count child tags
-            for child in tree[0].contents:
-                if isinstance(child, bs4.element.Tag):
-                    tag_children[child.name] += 1
-            _tag_children = {k: 0 for k in tag_children.keys()}
-
-            #  check if the tree can be split
-            for child in tree[0].contents:
-                if isinstance(child, bs4.element.Tag):
-                    #  change child tag with duplicate names
-                    if tag_children[child.name] > 1:
-                        new_name = f"{child.name}{_tag_children[child.name]}"
-                        new_tree = (child, tree[1] + [new_name])
-                        _tag_children[child.name] += 1
-                        child.name = new_name
-                    else:
-                        new_tree = (child, tree[1] + [child.name])
-                    word_count = len(child.get_text().split())
-                    #  add node with more than max_node_words words, and recursion depth is less than 64
-                    if word_count > max_node_words and len(new_tree[1]) < 64:
-                        possible_trees.append(new_tree)
-                    else:
-                        target_trees.append((new_tree[0], new_tree[1], True))
-                else:
-                    bare_word_count += len(str(child).split())
-
-            #  add leaf node
-            if len(tag_children) == 0:
-                target_trees.append((tree[0], tree[1], True))
-            #  add node with more than max_node_words bare words
-            elif bare_word_count > max_node_words:
-                target_trees.append((tree[0], tree[1], False))
-    else:
-        soup_children = [c for c in soup.contents if isinstance(c, bs4.element.Tag)]
-        if len(soup_children) == 1:
-            target_trees = [(soup_children[0], [soup_children[0].name], True)]
-        else:
-            # add an html tag to wrap all children
-            new_soup = bs4.BeautifulSoup("", 'html.parser')
-            new_tag = new_soup.new_tag("html")
-            new_soup.append(new_tag)
-            for child in soup_children:
-                new_tag.append(child)
-            target_trees = [(new_tag, ["html"], True)]
-    return target_trees
-
 logger = logging.get_logger(__name__)
 
 _CONFIG_FOR_DOC = "LlamaConfig"
@@ -1867,6 +1807,7 @@ class LlamaForHTMLTreeGeneration(LlamaPreTrainedModel):
                            tokenizer,
                            query: List[str],
                            htmls: List[List[str]],
+                           block_tree: List[Tuple],
                            **kwargs):
         max_seq_length = kwargs.pop("max_seq_length", 131072)
         def apply_html_tree_template(query, htmls):
@@ -1902,11 +1843,11 @@ class LlamaForHTMLTreeGeneration(LlamaPreTrainedModel):
                 soup.append(bs4.BeautifulSoup(html, 'html.parser'))
 
             token_id_paths = []
-            html_chunk_paths = split_tree(soup, max_node_words=self.max_node_words)
-            is_leaf = [p[2] for p in html_chunk_paths]
-            html_chunk_paths = [p[1] for p in html_chunk_paths]
+            _block_tree = block_tree[idx]
+            is_leaf = [p[2] for p in _block_tree]
+            _block_tree = [p[1] for p in _block_tree]
 
-            for path in html_chunk_paths:
+            for path in _block_tree:
                 path_str = "<" + "><".join(path) + ">"
                 token_ids = tokenizer.encode(path_str, add_special_tokens=False)
                 token_id_paths.append(token_ids)
@@ -1964,7 +1905,7 @@ class LlamaForHTMLTreeGeneration(LlamaPreTrainedModel):
 
             res_html_refs.append({
                 "html": str(soup),
-                "paths": html_chunk_paths,
+                "paths": _block_tree,
                 "is_leaf": is_leaf,
                 "path_token_ids": token_id_paths,
                 "node_tree": list(TokenDotExporter(root, nodenamefunc=nodenamefunc))
