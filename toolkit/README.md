@@ -1,3 +1,5 @@
+from ray.util.spark import MAX_NUM_WORKER_NODESfrom zipimport import MAX_COMMENT_LENfrom zipimport import MAX_COMMENT_LEN
+
 # 🤖🔍 HtmlRAG
 
 <div align="center">
@@ -66,13 +68,32 @@ print(simplified_html)
 # </html>
 ```
 
+### 🔧 Configure Pruning Parameters
+
+The example HTML document is rather a short one. Real-world HTML documents can be much longer and more complex. To handle such cases, we can configure the following parameters:
+```python
+# Maximum number of words in a node when constructing the block tree for pruning with the embedding model
+MAX_NODE_WORDS_EMBED = 10 
+# MAX_NODE_WORDS_EMBED = 256 # a recommended setting for real-world HTML documents
+# Maximum number of tokens in the output HTML document pruned with the embedding model
+MAX_CONTEXT_WINDOW_EMBED = 60
+# MAX_CONTEXT_WINDOW_EMBED = 6144 # a recommended setting for real-world HTML documents
+# Maximum number of words in a node when constructing the block tree for pruning with the generative model
+MAX_NODE_WORDS_GEN = 5
+# MAX_NODE_WORDS_GEN = 128 # a recommended setting for real-world HTML documents
+# Maximum number of tokens in the output HTML document pruned with the generative model
+MAX_CONTEXT_WINDOW_GEN = 32
+# MAX_CONTEXT_WINDOW_GEN = 4096 # a recommended setting for real-world HTML documents
+```
+
+
 
 ### 🌲 Build Block Tree
 
 ```python
 from htmlrag import build_block_tree
 
-block_tree, simplified_html = build_block_tree(simplified_html, max_node_words=10)
+block_tree, simplified_html = build_block_tree(simplified_html, max_node_words=MAX_NODE_WORDS_EMBED)
 for block in block_tree:
     print("Block Content: ", block[0])
     print("Block Path: ", block[1])
@@ -123,8 +144,7 @@ from transformers import AutoTokenizer
 
 chat_tokenizer = AutoTokenizer.from_pretrained("meta-llama/Llama-3.1-70B-Instruct")
 
-max_context_window = 60
-pruned_html = embed_html_pruner.prune_HTML(simplified_html, block_tree, block_rankings, chat_tokenizer, max_context_window)
+pruned_html = embed_html_pruner.prune_HTML(simplified_html, block_tree, block_rankings, chat_tokenizer, MAX_CONTEXT_WINDOW_EMBED)
 print(pruned_html)
 
 # <html>
@@ -140,18 +160,8 @@ print(pruned_html)
 from htmlrag import GenHTMLPruner
 import torch
 
-ckpt_path = "zstanjj/HTML-Pruner-Llama-1B"
-if torch.cuda.is_available():
-    device="cuda"
-else:
-    device="cpu"
-gen_embed_pruner = GenHTMLPruner(gen_model=ckpt_path, max_node_words=5, device=device)
-block_rankings = gen_embed_pruner.calculate_block_rankings(question, pruned_html)
-print(block_rankings)
-
-# [1, 0]
-
-block_tree, pruned_html=build_block_tree(pruned_html, max_node_words=10)
+# construct a finer block tree
+block_tree, pruned_html=build_block_tree(pruned_html, max_node_words=MAX_NODE_WORDS_GEN)
 for block in block_tree:
     print("Block Content: ", block[0])
     print("Block Path: ", block[1])
@@ -166,8 +176,18 @@ for block in block_tree:
 # Block Path:  ['html', 'p']
 # Is Leaf:  True
 
-max_context_window = 32
-pruned_html = gen_embed_pruner.prune_HTML(pruned_html, block_tree, block_rankings, chat_tokenizer, max_context_window)
+ckpt_path = "zstanjj/HTML-Pruner-Llama-1B"
+if torch.cuda.is_available():
+    device="cuda"
+else:
+    device="cpu"
+gen_embed_pruner = GenHTMLPruner(gen_model=ckpt_path, max_node_words=MAX_NODE_WORDS_GEN, device=device)
+block_rankings = gen_embed_pruner.calculate_block_rankings(question, pruned_html)
+print(block_rankings)
+
+# [1, 0]
+
+pruned_html = gen_embed_pruner.prune_HTML(pruned_html, block_tree, block_rankings, chat_tokenizer, MAX_CONTEXT_WINDOW_GEN)
 print(pruned_html)
 
 # <p>The Bellagio is a luxury hotel and casino located on the Las Vegas Strip in Paradise, Nevada. It was built in 1998.</p>
