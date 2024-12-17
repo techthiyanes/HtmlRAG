@@ -159,20 +159,20 @@ We provide the following baselines for comparison:
 - **BM25**: A widely used sparse rerank model. 
 ```bash
 export rerank_model="bm25"
-./scripts/rerank.sh
+./scripts/tree_rerank.sh
 ./scripts/trim_html_fill_chunk.sh
 ```
 
 - **[BGE](https://huggingface.co/BAAI/bge-large-en)**: An embedding model, BGE-Large-EN with encoder-only structure. Our scripts requires instantiation of an embedding model with [TEI](https://github.com/huggingface/text-embeddings-inference).
 ```bash
 export rerank_model="bge"
-./scripts/rerank.sh
+./scripts/tree_rerank.sh
 ./scripts/trim_html_fill_chunk.sh
 ```
 - **[E5-Mistral](https://huggingface.co/intfloat/e5-mistral-7b-instruct)**: A embedding model based on an LLM, Mistral-7B.  Our scripts requires instantiation of an embedding model with [TEI](https://github.com/huggingface/text-embeddings-inference).
 ```bash
 export rerank_model="e5-mistral"
-./scripts/rerank.sh
+./scripts/tree_rerank.sh
 ./scripts/trim_html_fill_chunk.sh
 ```
 - **LongLLMLingua**: An abstractive model using Llama7B to select useful context.
