@@ -1,36 +1,35 @@
-from ray.util.spark import MAX_NUM_WORKER_NODESfrom zipimport import MAX_COMMENT_LENfrom zipimport import MAX_COMMENT_LEN
-
-# 🤖🔍 HtmlRAG
+# 🤖🔍HtmlRAG
 
 <div align="center">
-<a href="https://arxiv.org/abs/2411.02959" target="_blank"><img src=https://img.shields.io/badge/arXiv-b5212f.svg?logo=arxiv></a>
+<a href="https://arxiv.org/pdf/2411.02959" target="_blank"><img src="https://img.shields.io/badge/arXiv-b5212f.svg?logo=arxiv"></a>
 <a href="https://github.com/plageon/HtmlRAG" target="_blank"><img src="https://img.shields.io/badge/GitHub-181717?style=flat&logo=github&logoColor=white"></a>
-<a href="https://modelscope.cn/models/zstanjj/HTML-Pruner-Llama-1B" target="_blank"><img src=https://custom-icon-badges.demolab.com/badge/ModelScope%20Models-624aff?style=flat&logo=modelscope&logoColor=white></a>
+<a href="https://modelscope.cn/models/zstanjj/HTML-Pruner-Llama-1B" target="_blank"><img src="https://custom-icon-badges.demolab.com/badge/ModelScope%20Models-624aff?style=flat&logo=modelscope&logoColor=white"></a>
 <a href="https://github.com/plageon/HtmlRAG/blob/main/toolkit/LICENSE"><img alt="License" src="https://img.shields.io/badge/LICENSE-MIT-green"></a>
 <a><img alt="Static Badge" src="https://img.shields.io/badge/made_with-Python-blue"></a>
 <p>
-<a herf="toolkit/README_zh.md">中文</a>&nbsp ｜ &nbsp English&nbsp
+中文&nbsp ｜ &nbsp<a href="toolkit/README.md">English</a>&nbsp
 </p>
 </div>
 
-A toolkit to apply HtmlRAG in your own RAG systems.
+一个可将HtmlRAG应用于你自己的检索增强生成（RAG）系统的工具包。
 
-## 📦 Installation
 
-Install the package using pip:
+## 📦 安装
+
+使用pip安装该软件包：
 ```bash
 pip install htmlrag
 ```
-Or install the package from source:
+或者从源代码进行安装：
 ```bash
-pip install -e .
+pip install -e.
 ```
 
 ---
 
-## 📖 User Guide
+## 📖 用户指南
 
-### 🧹 HTML Cleaning
+### 🧹 HTML清理
 
 ```python
 from htmlrag import clean_html
@@ -58,7 +57,7 @@ document.write("Hello World!");
 </html>
 """
 
-#. alternatively you can read html files and merge them
+# 或者，你可以读取html文件并合并它们
 # html_files=["/path/to/html/file1.html", "/path/to/html/file2.html"]
 # htmls=[open(file).read() for file in html_files]
 # html = "\n".join(htmls)
@@ -76,33 +75,31 @@ print(simplified_html)
 # </html>
 ```
 
-### 🔧 Configure Pruning Parameters
+### 🔧 配置修剪参数
 
-The example HTML document is rather a short one. Real-world HTML documents can be much longer and more complex. To handle such cases, we can configure the following parameters:
+示例中的HTML文档相当简短。现实世界中的HTML文档可能更长、更复杂。为了处理这类情况，我们可以配置以下参数：
 ```python
-# Maximum number of words in a node when constructing the block tree for pruning with the embedding model
+# 使用嵌入模型构建用于修剪的块树时，节点中的最大单词数
 MAX_NODE_WORDS_EMBED = 10 
-# MAX_NODE_WORDS_EMBED = 256 # a recommended setting for real-world HTML documents
-# Maximum number of tokens in the output HTML document pruned with the embedding model
+# MAX_NODE_WORDS_EMBED = 256 # 针对现实世界HTML文档的推荐设置
+# 使用嵌入模型修剪后的输出HTML文档中的最大标记数
 MAX_CONTEXT_WINDOW_EMBED = 60
-# MAX_CONTEXT_WINDOW_EMBED = 6144 # a recommended setting for real-world HTML documents
-# Maximum number of words in a node when constructing the block tree for pruning with the generative model
+# MAX_CONTEXT_WINDOW_EMBED = 6144 # 针对现实世界HTML文档的推荐设置
+# 使用生成模型构建用于修剪的块树时，节点中的最大单词数
 MAX_NODE_WORDS_GEN = 5
-# MAX_NODE_WORDS_GEN = 128 # a recommended setting for real-world HTML documents
-# Maximum number of tokens in the output HTML document pruned with the generative model
+# MAX_NODE_WORDS_GEN = 128 # 针对现实世界HTML文档的推荐设置
+# 使用生成模型修剪后的输出HTML文档中的最大标记数
 MAX_CONTEXT_WINDOW_GEN = 32
-# MAX_CONTEXT_WINDOW_GEN = 4096 # a recommended setting for real-world HTML documents
+# MAX_CONTEXT_WINDOW_GEN = 4096 # 针对现实世界HTML文档的推荐设置
 ```
 
-
-
-### 🌲 Build Block Tree
+### 🌲 构建块树
 
 ```python
 from htmlrag import build_block_tree
 
 block_tree, simplified_html = build_block_tree(simplified_html, max_node_words=MAX_NODE_WORDS_EMBED)
-# block_tree, simplified_html=build_block_tree(simplified_html, max_node_words=MAX_NODE_WORDS_GEN, zh_char=True) # for Chinese text
+# block_tree, simplified_html=build_block_tree(simplified_html, max_node_words=MAX_NODE_WORDS_GEN, zh_char=True) # 针对中文文本
 for block in block_tree:
     print("Block Content: ", block[0])
     print("Block Path: ", block[1])
@@ -125,7 +122,7 @@ for block in block_tree:
 # Is Leaf:  True
 ```
 
-### ✂️ Prune HTML Blocks with Embedding Model
+### ✂️ 使用嵌入模型修剪HTML块
 
 ```python
 from htmlrag import EmbedHTMLPruner
@@ -133,7 +130,7 @@ from htmlrag import EmbedHTMLPruner
 embed_model="/train_data_load/huggingface/tjj_hf/bge-large-en/"
 query_instruction_for_retrieval = "Instruct: Given a web search query, retrieve relevant passages that answer the query\nQuery: "
 embed_html_pruner = EmbedHTMLPruner(embed_model=embed_model, local_inference=True, query_instruction_for_retrieval = query_instruction_for_retrieval)
-# alternatively you can init a remote TEI model, refer to https://github.com/huggingface/text-embeddings-inference.
+# 或者，你可以初始化一个远程TEI模型，参考https://github.com/huggingface/text-embeddings-inference。
 # tei_endpoint="http://YOUR_TEI_ENDPOINT"
 # embed_html_pruner = EmbedHTMLPruner(embed_model=embed_model, local_inference=False, query_instruction_for_retrieval = query_instruction_for_retrieval, endpoint=tei_endpoint)
 block_rankings=embed_html_pruner.calculate_block_rankings(question, simplified_html, block_tree)
@@ -141,7 +138,7 @@ print(block_rankings)
 
 # [0, 2, 1]
 
-#. alternatively you can use bm25 to rank the blocks
+# 或者，你可以使用BM25对块进行排序
 from htmlrag import BM25HTMLPruner
 bm25_html_pruner = BM25HTMLPruner()
 block_rankings=bm25_html_pruner.calculate_block_rankings(question, simplified_html, block_tree)
@@ -163,15 +160,15 @@ print(pruned_html)
 ```
 
 
-### ✂️ Prune HTML Blocks with Generative Model
+### ✂️ 使用生成模型修剪HTML块
 
 ```python
 from htmlrag import GenHTMLPruner
 import torch
 
-# construct a finer block tree
+# 构建更精细的块树
 block_tree, pruned_html=build_block_tree(pruned_html, max_node_words=MAX_NODE_WORDS_GEN)
-# block_tree, pruned_html=build_block_tree(pruned_html, max_node_words=MAX_NODE_WORDS_GEN, zh_char=True) # for Chinese text
+# block_tree, pruned_html=build_block_tree(pruned_html, max_node_words=MAX_NODE_WORDS_GEN, zh_char=True) # 针对中文文本
 for block in block_tree:
     print("Block Content: ", block[0])
     print("Block Path: ", block[1])
