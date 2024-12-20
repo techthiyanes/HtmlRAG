@@ -1,6 +1,4 @@
-from ray.util.spark import MAX_NUM_WORKER_NODESfrom zipimport import MAX_COMMENT_LENfrom zipimport import MAX_COMMENT_LEN
-
-# 🤖🔍 HtmlRAG
+# HtmlRAG Toolkit
 
 <div align="center">
 <a href="https://arxiv.org/abs/2411.02959" target="_blank"><img src=https://img.shields.io/badge/arXiv-b5212f.svg?logo=arxiv></a>
@@ -9,7 +7,7 @@ from ray.util.spark import MAX_NUM_WORKER_NODESfrom zipimport import MAX_COMMENT
 <a href="https://github.com/plageon/HtmlRAG/blob/main/toolkit/LICENSE"><img alt="License" src="https://img.shields.io/badge/LICENSE-MIT-green"></a>
 <a><img alt="Static Badge" src="https://img.shields.io/badge/made_with-Python-blue"></a>
 <p>
-<a herf="toolkit/README_zh.md">中文</a>&nbsp ｜ &nbsp English&nbsp
+<a href="README_zh.md">中文</a>&nbsp ｜ &nbsp English&nbsp
 </p>
 </div>
 

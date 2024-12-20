@@ -1,4 +1,4 @@
-# 🤖🔍HtmlRAG
+# HtmlRAG 工具包中文文档
 
 <div align="center">
 <a href="https://arxiv.org/pdf/2411.02959" target="_blank"><img src="https://img.shields.io/badge/arXiv-b5212f.svg?logo=arxiv"></a>
@@ -7,7 +7,7 @@
 <a href="https://github.com/plageon/HtmlRAG/blob/main/toolkit/LICENSE"><img alt="License" src="https://img.shields.io/badge/LICENSE-MIT-green"></a>
 <a><img alt="Static Badge" src="https://img.shields.io/badge/made_with-Python-blue"></a>
 <p>
-中文&nbsp ｜ &nbsp<a href="toolkit/README.md">English</a>&nbsp
+中文&nbsp ｜ &nbsp<a href="README.md">English</a>&nbsp
 </p>
 </div>
 
