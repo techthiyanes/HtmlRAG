@@ -111,7 +111,7 @@ MAX_CONTEXT_WINDOW_GEN = 32
 from htmlrag import build_block_tree
 
 block_tree, simplified_html = build_block_tree(simplified_html, max_node_words=MAX_NODE_WORDS_EMBED)
-# block_tree, simplified_html=build_block_tree(simplified_html, max_node_words=MAX_NODE_WORDS_GEN, zh_char=True) # for Chinese text
+# block_tree, simplified_html = build_block_tree(simplified_html, max_node_words=MAX_NODE_WORDS_GEN, zh_char=True) # for Chinese text
 for block in block_tree:
     print("Block Content: ", block[0])
     print("Block Path: ", block[1])
@@ -153,7 +153,7 @@ print(block_rankings)
 #. alternatively you can use bm25 to rank the blocks
 from htmlrag import BM25HTMLPruner
 bm25_html_pruner = BM25HTMLPruner()
-block_rankings=bm25_html_pruner.calculate_block_rankings(question, simplified_html, block_tree)
+block_rankings = bm25_html_pruner.calculate_block_rankings(question, simplified_html, block_tree)
 print(block_rankings)
 
 # [0, 2, 1]
@@ -179,8 +179,8 @@ from htmlrag import GenHTMLPruner
 import torch
 
 # construct a finer block tree
-block_tree, pruned_html=build_block_tree(pruned_html, max_node_words=MAX_NODE_WORDS_GEN)
-# block_tree, pruned_html=build_block_tree(pruned_html, max_node_words=MAX_NODE_WORDS_GEN, zh_char=True) # for Chinese text
+block_tree, pruned_html = build_block_tree(pruned_html, max_node_words=MAX_NODE_WORDS_GEN)
+# block_tree, pruned_html = build_block_tree(pruned_html, max_node_words=MAX_NODE_WORDS_GEN, zh_char=True) # for Chinese text
 for block in block_tree:
     print("Block Content: ", block[0])
     print("Block Path: ", block[1])
@@ -201,7 +201,7 @@ if torch.cuda.is_available():
 else:
     device="cpu"
 gen_embed_pruner = GenHTMLPruner(gen_model=ckpt_path, max_node_words=MAX_NODE_WORDS_GEN, device=device)
-block_rankings=gen_embed_pruner.calculate_block_rankings(question, pruned_html, block_tree)
+block_rankings = gen_embed_pruner.calculate_block_rankings(question, pruned_html, block_tree)
 print(block_rankings)
 
 # [1, 0]
