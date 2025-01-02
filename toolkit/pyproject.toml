@@ -4,13 +4,18 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "htmlrag"
-version = "0.0.5"
+version = "0.0.6"
 authors = [
   { name="zstanjj", email="zstanjj@gmail.com" },
+  { name="zstanjj" }
 ]
-description = "A small toolkit for HTML cleaning and pruning for RAG systems."
-readme = "README.md"
+readme = {file = "README.md", content-type = "text/markdown"}
+maintainers = [
+  { name="zstanjj", email="zstanjj@gmail.com" },
+]
+description = "A smart toolkit for HTML cleaning and pruning for RAG systems."
 requires-python = ">=3.8"
+license = {text = "MIT License"}
 classifiers = [
     "Programming Language :: Python :: 3",
     "License :: OSI Approved :: MIT License",
@@ -33,6 +38,7 @@ dependencies = [
     "langchain-community >= 0.3.0",
     "faiss-cpu",
 ]
+keywords = [ "html", "rag", "transformers", "nlp", "cleaning", "pruning" ]
 
 [project.urls]
 Homepage = "https://github.com/plageon/HtmlRAG"
