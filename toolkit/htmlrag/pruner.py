@@ -138,10 +138,9 @@ class BM25HTMLPruner(Pruner):
 
 class GenHTMLPruner(Pruner):
 
-    def __init__(self,  gen_model, max_node_words, device="cpu"):
+    def __init__(self, gen_model, device="cpu"):
         self.gen_model = AutoModelForSeq2SeqLM.from_pretrained(gen_model, trust_remote_code=True, torch_dtype=torch.bfloat16).eval()
         self.gen_model.to(device)
-        self.gen_model.max_node_words = max_node_words
         self.node_tokenizer = AutoTokenizer.from_pretrained(gen_model, trust_remote_code=True)
         self.log_threshold = 1e-9
 

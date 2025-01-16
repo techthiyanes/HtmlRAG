@@ -7,11 +7,15 @@
 <a href="https://github.com/plageon/HtmlRAG/blob/main/toolkit/LICENSE"><img alt="License" src="https://img.shields.io/badge/LICENSE-MIT-green"></a>
 <a><img alt="Static Badge" src="https://img.shields.io/badge/made_with-Python-blue"></a>
 <p>
-中文&nbsp ｜ &nbsp<a href="README.md">English</a>&nbsp
+<a href="https://github.com/plageon/HtmlRAG#-quick-start">Quick Start (快速开始)</a>&nbsp ｜ &nbsp 中文&nbsp ｜ &nbsp<a href="README.md">English</a>&nbsp
 </p>
 </div>
 
 一个可将HtmlRAG应用于你自己的检索增强生成（RAG）系统的工具包。
+
+**🔔重要提示：**
+- 类`GenHTMLPruner`的参数`max_node_words`在`v0.1.0`版本中被移除。
+- 如果从htmlrag v0.0.4升级到v0.0.5，请下载最新的模型文件，它们位于[modeling_llama.py](https://github.com/plageon/HtmlRAG/blob/main/llm_modeling/Llama32/modeling_llama.py)和[modeling_phi3.py](https://github.com/plageon/HtmlRAG/blob/main/llm_modeling/Phi35/modeling_phi3.py)。
 
 ## 📦 安装
 
@@ -101,8 +105,8 @@ MAX_CONTEXT_WINDOW_GEN = 32
 ```python
 from htmlrag import build_block_tree
 
-block_tree, simplified_html = build_block_tree(simplified_html, max_node_words=MAX_NODE_WORDS_EMBED)
-# block_tree, simplified_html=build_block_tree(simplified_html, max_node_words=MAX_NODE_WORDS_GEN, zh_char=True) # 针对中文文本
+# block_tree, simplified_html = build_block_tree(simplified_html, max_node_words=MAX_NODE_WORDS_EMBED)
+block_tree, simplified_html=build_block_tree(simplified_html, max_node_words=MAX_NODE_WORDS_GEN, zh_char=True) # 针对中文文本
 for block in block_tree:
     print("Block Content: ", block[0])
     print("Block Path: ", block[1])
@@ -130,8 +134,8 @@ for block in block_tree:
 ```python
 from htmlrag import EmbedHTMLPruner
 
-embed_model = "BAAI/bge-large-en"
-query_instruction_for_retrieval = "Instruct: Given a web search query, retrieve relevant passages that answer the query\nQuery: "
+embed_model = "BAAI/bge-large-zh"
+query_instruction_for_retrieval = "为这个句子生成表示以用于检索相关文章："
 embed_html_pruner = EmbedHTMLPruner(embed_model=embed_model, local_inference=True,
                                     query_instruction_for_retrieval=query_instruction_for_retrieval)
 # 或者，你可以初始化一个远程TEI模型，参考https://github.com/huggingface/text-embeddings-inference。
@@ -171,8 +175,8 @@ from htmlrag import GenHTMLPruner
 import torch
 
 # 构建更精细的块树
-block_tree, pruned_html = build_block_tree(pruned_html, max_node_words=MAX_NODE_WORDS_GEN)
-# block_tree, pruned_html=build_block_tree(pruned_html, max_node_words=MAX_NODE_WORDS_GEN, zh_char=True) # 针对中文文本
+# block_tree, pruned_html = build_block_tree(pruned_html, max_node_words=MAX_NODE_WORDS_GEN)
+block_tree, pruned_html=build_block_tree(pruned_html, max_node_words=MAX_NODE_WORDS_GEN, zh_char=True) # 针对中文文本
 for block in block_tree:
     print("Block Content: ", block[0])
     print("Block Path: ", block[1])
@@ -187,13 +191,13 @@ for block in block_tree:
 # Block Path:  ['html', 'p']
 # Is Leaf:  True
 
-# ckpt_path = "/processing_data/biz/jiejuntan/huggingface/HTML-Pruner-Phi-3.8B"
-ckpt_path = "/processing_data/biz/jiejuntan/huggingface/HTML-Pruner-Llama-1B"
+ckpt_path = "zstanjj/HTML-Pruner-Phi-3.8B"
+# ckpt_path = "zstanjj/HTML-Pruner-Llama-1B"
 if torch.cuda.is_available():
     device = "cuda"
 else:
     device = "cpu"
-gen_html_pruner = GenHTMLPruner(gen_model=ckpt_path, max_node_words=MAX_NODE_WORDS_GEN, device=device)
+gen_html_pruner = GenHTMLPruner(gen_model=ckpt_path, device=device)
 block_rankings = gen_html_pruner.calculate_block_rankings(question, pruned_html, block_tree)
 print(block_rankings)
 

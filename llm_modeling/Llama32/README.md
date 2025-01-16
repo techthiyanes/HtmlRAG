@@ -200,7 +200,7 @@ if torch.cuda.is_available():
     device="cuda"
 else:
     device="cpu"
-gen_embed_pruner = GenHTMLPruner(gen_model=ckpt_path, max_node_words=MAX_NODE_WORDS_GEN, device=device)
+gen_embed_pruner = GenHTMLPruner(gen_model=ckpt_path, device=device)
 block_rankings = gen_embed_pruner.calculate_block_rankings(question, pruned_html, block_tree)
 print(block_rankings)
 

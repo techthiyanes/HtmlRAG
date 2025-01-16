@@ -6,7 +6,18 @@
 <a href="https://www.modelscope.cn/collections/HtmlRAG-c290f7cf673648" target="_blank"><img src=https://custom-icon-badges.demolab.com/badge/ModelScope%20Models-624aff?style=flat&logo=modelscope&logoColor=white></a>
 <a href="https://github.com/plageon/HtmlRAG/blob/main/toolkit/LICENSE"><img alt="License" src="https://img.shields.io/badge/LICENSE-MIT-green"></a>
 <a><img alt="Static Badge" src="https://img.shields.io/badge/made_with-Python-blue"></a>
+<p>
+<a href="https://github.com/plageon/HtmlRAG#-quick-start">Quick Start (快速开始)</a>&nbsp ｜ &nbsp<a href="toolkit/README_zh.md">中文文档</a>&nbsp ｜ &nbsp<a href="toolkit/README.md">English Documentation</a>&nbsp
+</p>
 </div>
+
+## 📖 Table of Contents
+- [Introduction](#-introduction)
+- [News](#-latest-news)
+- [Installation](#-installation)
+- [Quick Start](#-quick-start)
+- [Reproduce Results](#-dependencies)
+- [Citation](#-citation)
 
 ## ✨ Latest News
 - [12/20/2024]: Add Chinese toolkit user guide in [toolkit/README_zh.md](toolkit/README_zh.md). 添加中文工具包使用指南。
@@ -16,9 +27,12 @@
 - [11/06/2024]: Our paper is available on arXiv. You can access it [here](https://arxiv.org/abs/2411.02959).
 - [11/05/2024]: The open-source toolkit and models are released. You can apply HtmlRAG in your own RAG systems now.
 
-**🔔Important:** If you switch from htmlrag v0.0.4 to v0.0.5, please download the latest version of modeling files for Gerative HTML Pruners, which are available at [modeling_llama.py](https://github.com/plageon/HtmlRAG/blob/main/llm_modeling/Llama32/modeling_llama.py), and [modeling_phi3.py](https://github.com/plageon/HtmlRAG/blob/main/llm_modeling/Phi35/modeling_phi3.py). Alternatively, you can re-download the models from HuggingFace ([HTML-Pruner-Phi-3.8B](https://huggingface.co/zstanjj/HTML-Pruner-Phi-3.8B) and [HTML-Pruner-Llama-1B](https://huggingface.co/zstanjj/HTML-Pruner-Llama-1B)).
+**🔔Important:** 
+- Parameter `max_node_words` is removed from class `GenHTMLPruner` since `v0.1.0`.
+- If you switch from htmlrag v0.0.4 to v0.0.5, please download the latest version of modeling files for Gerative HTML Pruners, which are available at [modeling_llama.py](https://github.com/plageon/HtmlRAG/blob/main/llm_modeling/Llama32/modeling_llama.py), and [modeling_phi3.py](https://github.com/plageon/HtmlRAG/blob/main/llm_modeling/Phi35/modeling_phi3.py). Alternatively, you can re-download the models from HuggingFace ([HTML-Pruner-Phi-3.8B](https://huggingface.co/zstanjj/HTML-Pruner-Phi-3.8B) and [HTML-Pruner-Llama-1B](https://huggingface.co/zstanjj/HTML-Pruner-Llama-1B)).
 
 
+## 📝 Introduction
 We propose HtmlRAG, which uses HTML instead of plain text as the format of external knowledge in RAG systems. To tackle the long context brought by HTML, we propose **Lossless HTML Cleaning** and **Two-Step Block-Tree-Based HTML Pruning**.
 
 - **Lossless HTML Cleaning**: This cleaning process just removes totally irrelevant contents and compress redundant structures, retaining all semantic information in the original HTML. The compressed HTML of lossless HTML cleaning is suitable for RAG systems that have long-context LLMs and are not willing to loss any information before generation.
@@ -45,7 +59,37 @@ cd toolkit/
 pip install -e .
 ```
 
-Please refer to the [user guide](toolkit/README.md) for more details.
+### 🎯 Quick Start
+An example of using HtmlRAG in your own RAG systems:
+```shell
+python run_htmlrag_pipeline.py \
+    --html_file "./html_data/example/Washington Post.html" \
+    --lang en \
+    --embed_model "BAAI/bge-large-en" \
+    --gen_model "zstanjj/HTML-Pruner-Phi-3.8B" \
+    --chat_tokenizer_name "meta-llama/Llama-3.1-70B-Instruct" \
+    --max_node_words_embed 256 \
+    --max_context_window_embed 4096 \
+    --max_node_words_gen 128 \
+    --max_context_window_gen 2048
+```
+Please refer to the [Documentation](toolkit/README.md) for more details.
+
+一个简单的例子，如何在自己的RAG系统中使用HtmlRAG：
+```shell
+python html4rag/run_htmlrag_pipeline.py \
+    --html_file "./html_data/example/对经济政策的预期.html" \
+    --question "今年1-10月，专项债券的投资情况怎么样？" \
+    --lang zh \
+    --embed_model "BAAI/bge-large-zh" \
+    --gen_model "zstanjj/HTML-Pruner-Phi-3.8B" \
+    --chat_tokenizer_name "meta-llama/Llama-3.1-70B-Instruct" \
+    --max_node_words_embed 256 \
+    --max_context_window_embed 4096 \
+    --max_node_words_gen 128 \
+    --max_context_window_gen 2048
+```
+请访问[中文文档](toolkit/README_zh.md)了解更多细节。
 
 If you are interested in reproducing the results in the paper, please follow the instructions below.
 

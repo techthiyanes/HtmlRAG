@@ -7,11 +7,16 @@
 <a href="https://github.com/plageon/HtmlRAG/blob/main/toolkit/LICENSE"><img alt="License" src="https://img.shields.io/badge/LICENSE-MIT-green"></a>
 <a><img alt="Static Badge" src="https://img.shields.io/badge/made_with-Python-blue"></a>
 <p>
-<a href="README_zh.md">中文</a>&nbsp ｜ &nbsp English&nbsp
+<a href="https://github.com/plageon/HtmlRAG#-quick-start">Quick Start (快速开始)</a>&nbsp ｜ &nbsp<a href="README_zh.md">中文</a>&nbsp ｜ &nbsp English&nbsp
 </p>
 </div>
 
 A toolkit to apply HtmlRAG in your own RAG systems.
+
+**🔔Important:** 
+- Parameter `max_node_words` is removed from class `GenHTMLPruner` since `v0.1.0`.
+- If you switch from htmlrag v0.0.4 to v0.0.5, please download the latest version of modeling files for Gerative HTML Pruners, which are available at [modeling_llama.py](https://github.com/plageon/HtmlRAG/blob/main/llm_modeling/Llama32/modeling_llama.py), and [modeling_phi3.py](https://github.com/plageon/HtmlRAG/blob/main/llm_modeling/Phi35/modeling_phi3.py). Alternatively, you can re-download the models from HuggingFace ([HTML-Pruner-Phi-3.8B](https://huggingface.co/zstanjj/HTML-Pruner-Phi-3.8B) and [HTML-Pruner-Llama-1B](https://huggingface.co/zstanjj/HTML-Pruner-Llama-1B)).
+
 
 ## 📦 Installation
 
@@ -188,13 +193,13 @@ for block in block_tree:
 # Block Path:  ['html', 'p']
 # Is Leaf:  True
 
-# ckpt_path = "/processing_data/biz/jiejuntan/huggingface/HTML-Pruner-Phi-3.8B"
-ckpt_path = "/processing_data/biz/jiejuntan/huggingface/HTML-Pruner-Llama-1B"
+ckpt_path = "zstanjj/HTML-Pruner-Phi-3.8B"
+# ckpt_path = "zstanjj/HTML-Pruner-Llama-1B"
 if torch.cuda.is_available():
     device = "cuda"
 else:
     device = "cpu"
-gen_html_pruner = GenHTMLPruner(gen_model=ckpt_path, max_node_words=MAX_NODE_WORDS_GEN, device=device)
+gen_html_pruner = GenHTMLPruner(gen_model=ckpt_path, device=device)
 block_rankings = gen_html_pruner.calculate_block_rankings(question, pruned_html, block_tree)
 print(block_rankings)
 
