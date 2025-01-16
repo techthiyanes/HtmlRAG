@@ -16,10 +16,13 @@ A toolkit to apply HtmlRAG in your own RAG systems.
 ## 📦 Installation
 
 Install the package using pip:
+
 ```bash
 pip install htmlrag
 ```
+
 Or install the package from source:
+
 ```bash
 pip install -e .
 ```
@@ -37,7 +40,7 @@ question = "When was the bellagio in las vegas built?"
 html = """
 <html>
 <head>
-<title>When was the bellagio in las vegas built?</title>
+<h1>Bellagio Hotel in Las</h1>
 </head>
 <body>
 <p class="class0">The Bellagio is a luxury hotel and casino located on the Las Vegas Strip in Paradise, Nevada. It was built in 1998.</p>
@@ -56,7 +59,7 @@ document.write("Hello World!");
 </html>
 """
 
-#. alternatively you can read html files and merge them
+# . alternatively you can read html files and merge them
 # html_files=["/path/to/html/file1.html", "/path/to/html/file2.html"]
 # htmls=[open(file).read() for file in html_files]
 # html = "\n".join(htmls)
@@ -65,7 +68,7 @@ simplified_html = clean_html(html)
 print(simplified_html)
 
 # <html>
-# <title>When was the bellagio in las vegas built?</title>
+# <h1>Bellagio Hotel in Las</h1>
 # <p>The Bellagio is a luxury hotel and casino located on the Las Vegas Strip in Paradise, Nevada. It was built in 1998.</p>
 # <div>
 # <p>Some other text</p>
@@ -76,10 +79,12 @@ print(simplified_html)
 
 ### 🔧 Configure Pruning Parameters
 
-The example HTML document is rather a short one. Real-world HTML documents can be much longer and more complex. To handle such cases, we can configure the following parameters:
+The example HTML document is rather a short one. Real-world HTML documents can be much longer and more complex. To
+handle such cases, we can configure the following parameters:
+
 ```python
 # Maximum number of words in a node when constructing the block tree for pruning with the embedding model
-MAX_NODE_WORDS_EMBED = 10 
+MAX_NODE_WORDS_EMBED = 10
 # MAX_NODE_WORDS_EMBED = 256 # a recommended setting for real-world HTML documents
 # Maximum number of tokens in the output HTML document pruned with the embedding model
 MAX_CONTEXT_WINDOW_EMBED = 60
@@ -91,8 +96,6 @@ MAX_NODE_WORDS_GEN = 5
 MAX_CONTEXT_WINDOW_GEN = 32
 # MAX_CONTEXT_WINDOW_GEN = 4096 # a recommended setting for real-world HTML documents
 ```
-
-
 
 ### 🌲 Build Block Tree
 
@@ -107,7 +110,7 @@ for block in block_tree:
     print("Is Leaf: ", block[2])
     print("")
 
-# Block Content:  <title>When was the bellagio in las vegas built?</title>
+# Block Content:  <h1>Bellagio Hotel in Las</h1>
 # Block Path:  ['html', 'title']
 # Is Leaf:  True
 # 
@@ -128,24 +131,26 @@ for block in block_tree:
 ```python
 from htmlrag import EmbedHTMLPruner
 
-embed_model = "/train_data_load/huggingface/tjj_hf/bge-large-en/"
+embed_model = "BAAI/bge-large-en"
 query_instruction_for_retrieval = "Instruct: Given a web search query, retrieve relevant passages that answer the query\nQuery: "
-embed_html_pruner = EmbedHTMLPruner(embed_model=embed_model, local_inference=True, query_instruction_for_retrieval = query_instruction_for_retrieval)
+embed_html_pruner = EmbedHTMLPruner(embed_model=embed_model, local_inference=True,
+                                    query_instruction_for_retrieval=query_instruction_for_retrieval)
 # alternatively you can init a remote TEI model, refer to https://github.com/huggingface/text-embeddings-inference.
 # tei_endpoint="http://YOUR_TEI_ENDPOINT"
 # embed_html_pruner = EmbedHTMLPruner(embed_model=embed_model, local_inference=False, query_instruction_for_retrieval = query_instruction_for_retrieval, endpoint=tei_endpoint)
 block_rankings = embed_html_pruner.calculate_block_rankings(question, simplified_html, block_tree)
 print(block_rankings)
 
-# [0, 2, 1]
+# [2, 0, 1]
 
 #. alternatively you can use bm25 to rank the blocks
 from htmlrag import BM25HTMLPruner
+
 bm25_html_pruner = BM25HTMLPruner()
 block_rankings = bm25_html_pruner.calculate_block_rankings(question, simplified_html, block_tree)
 print(block_rankings)
 
-# [0, 2, 1]
+# [2, 0, 1]
 
 from transformers import AutoTokenizer
 
@@ -155,11 +160,10 @@ pruned_html = embed_html_pruner.prune_HTML(simplified_html, block_tree, block_ra
 print(pruned_html)
 
 # <html>
-# <title>When was the bellagio in las vegas built?</title>
+# <h1>Bellagio Hotel in Las</h1>
 # <p>The Bellagio is a luxury hotel and casino located on the Las Vegas Strip in Paradise, Nevada. It was built in 1998.</p>
 # </html>
 ```
-
 
 ### ✂️ Prune HTML Blocks with Generative Model
 
@@ -175,8 +179,8 @@ for block in block_tree:
     print("Block Path: ", block[1])
     print("Is Leaf: ", block[2])
     print("")
-    
-# Block Content:  <title>When was the bellagio in las vegas built?</title>
+
+# Block Content:  <h1>Bellagio Hotel in Las</h1>
 # Block Path:  ['html', 'title']
 # Is Leaf:  True
 # 
@@ -184,18 +188,19 @@ for block in block_tree:
 # Block Path:  ['html', 'p']
 # Is Leaf:  True
 
-ckpt_path = "zstanjj/HTML-Pruner-Llama-1B"
+# ckpt_path = "/processing_data/biz/jiejuntan/huggingface/HTML-Pruner-Phi-3.8B"
+ckpt_path = "/processing_data/biz/jiejuntan/huggingface/HTML-Pruner-Llama-1B"
 if torch.cuda.is_available():
-    device="cuda"
+    device = "cuda"
 else:
-    device="cpu"
-gen_embed_pruner = GenHTMLPruner(gen_model=ckpt_path, max_node_words=MAX_NODE_WORDS_GEN, device=device)
-block_rankings = gen_embed_pruner.calculate_block_rankings(question, pruned_html, block_tree)
+    device = "cpu"
+gen_html_pruner = GenHTMLPruner(gen_model=ckpt_path, max_node_words=MAX_NODE_WORDS_GEN, device=device)
+block_rankings = gen_html_pruner.calculate_block_rankings(question, pruned_html, block_tree)
 print(block_rankings)
 
 # [1, 0]
 
-pruned_html = gen_embed_pruner.prune_HTML(pruned_html, block_tree, block_rankings, chat_tokenizer, MAX_CONTEXT_WINDOW_GEN)
+pruned_html = gen_html_pruner.prune_HTML(pruned_html, block_tree, block_rankings, chat_tokenizer, MAX_CONTEXT_WINDOW_GEN)
 print(pruned_html)
 
 # <p>The Bellagio is a luxury hotel and casino located on the Las Vegas Strip in Paradise, Nevada. It was built in 1998.</p>

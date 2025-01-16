@@ -13,14 +13,16 @@
 
 一个可将HtmlRAG应用于你自己的检索增强生成（RAG）系统的工具包。
 
-
 ## 📦 安装
 
 使用pip安装该软件包：
+
 ```bash
 pip install htmlrag
 ```
+
 或者从源代码进行安装：
+
 ```bash
 pip install -e.
 ```
@@ -38,7 +40,7 @@ question = "When was the bellagio in las vegas built?"
 html = """
 <html>
 <head>
-<title>When was the bellagio in las vegas built?</title>
+<h1>Bellagio Hotel in Las</h1>
 </head>
 <body>
 <p class="class0">The Bellagio is a luxury hotel and casino located on the Las Vegas Strip in Paradise, Nevada. It was built in 1998.</p>
@@ -66,7 +68,7 @@ simplified_html = clean_html(html)
 print(simplified_html)
 
 # <html>
-# <title>When was the bellagio in las vegas built?</title>
+# <h1>Bellagio Hotel in Las</h1>
 # <p>The Bellagio is a luxury hotel and casino located on the Las Vegas Strip in Paradise, Nevada. It was built in 1998.</p>
 # <div>
 # <p>Some other text</p>
@@ -78,9 +80,10 @@ print(simplified_html)
 ### 🔧 配置修剪参数
 
 示例中的HTML文档相当简短。现实世界中的HTML文档可能更长、更复杂。为了处理这类情况，我们可以配置以下参数：
+
 ```python
 # 使用嵌入模型构建用于修剪的块树时，节点中的最大单词数
-MAX_NODE_WORDS_EMBED = 10 
+MAX_NODE_WORDS_EMBED = 10
 # MAX_NODE_WORDS_EMBED = 256 # 针对现实世界HTML文档的推荐设置
 # 使用嵌入模型修剪后的输出HTML文档中的最大标记数
 MAX_CONTEXT_WINDOW_EMBED = 60
@@ -106,7 +109,7 @@ for block in block_tree:
     print("Is Leaf: ", block[2])
     print("")
 
-# Block Content:  <title>When was the bellagio in las vegas built?</title>
+# Block Content:  <h1>Bellagio Hotel in Las</h1>
 # Block Path:  ['html', 'title']
 # Is Leaf:  True
 # 
@@ -127,24 +130,26 @@ for block in block_tree:
 ```python
 from htmlrag import EmbedHTMLPruner
 
-embed_model="/train_data_load/huggingface/tjj_hf/bge-large-en/"
+embed_model = "BAAI/bge-large-en"
 query_instruction_for_retrieval = "Instruct: Given a web search query, retrieve relevant passages that answer the query\nQuery: "
-embed_html_pruner = EmbedHTMLPruner(embed_model=embed_model, local_inference=True, query_instruction_for_retrieval = query_instruction_for_retrieval)
+embed_html_pruner = EmbedHTMLPruner(embed_model=embed_model, local_inference=True,
+                                    query_instruction_for_retrieval=query_instruction_for_retrieval)
 # 或者，你可以初始化一个远程TEI模型，参考https://github.com/huggingface/text-embeddings-inference。
 # tei_endpoint="http://YOUR_TEI_ENDPOINT"
 # embed_html_pruner = EmbedHTMLPruner(embed_model=embed_model, local_inference=False, query_instruction_for_retrieval = query_instruction_for_retrieval, endpoint=tei_endpoint)
-block_rankings=embed_html_pruner.calculate_block_rankings(question, simplified_html, block_tree)
+block_rankings = embed_html_pruner.calculate_block_rankings(question, simplified_html, block_tree)
 print(block_rankings)
 
-# [0, 2, 1]
+# [2, 0, 1]
 
 # 或者，你可以使用BM25对块进行排序
 from htmlrag import BM25HTMLPruner
+
 bm25_html_pruner = BM25HTMLPruner()
-block_rankings=bm25_html_pruner.calculate_block_rankings(question, simplified_html, block_tree)
+block_rankings = bm25_html_pruner.calculate_block_rankings(question, simplified_html, block_tree)
 print(block_rankings)
 
-# [0, 2, 1]
+# [2, 0, 1]
 
 from transformers import AutoTokenizer
 
@@ -154,11 +159,10 @@ pruned_html = embed_html_pruner.prune_HTML(simplified_html, block_tree, block_ra
 print(pruned_html)
 
 # <html>
-# <title>When was the bellagio in las vegas built?</title>
+# <h1>Bellagio Hotel in Las</h1>
 # <p>The Bellagio is a luxury hotel and casino located on the Las Vegas Strip in Paradise, Nevada. It was built in 1998.</p>
 # </html>
 ```
-
 
 ### ✂️ 使用生成模型修剪HTML块
 
@@ -167,15 +171,15 @@ from htmlrag import GenHTMLPruner
 import torch
 
 # 构建更精细的块树
-block_tree, pruned_html=build_block_tree(pruned_html, max_node_words=MAX_NODE_WORDS_GEN)
+block_tree, pruned_html = build_block_tree(pruned_html, max_node_words=MAX_NODE_WORDS_GEN)
 # block_tree, pruned_html=build_block_tree(pruned_html, max_node_words=MAX_NODE_WORDS_GEN, zh_char=True) # 针对中文文本
 for block in block_tree:
     print("Block Content: ", block[0])
     print("Block Path: ", block[1])
     print("Is Leaf: ", block[2])
     print("")
-    
-# Block Content:  <title>When was the bellagio in las vegas built?</title>
+
+# Block Content:  <h1>Bellagio Hotel in Las</h1>
 # Block Path:  ['html', 'title']
 # Is Leaf:  True
 # 
@@ -183,18 +187,19 @@ for block in block_tree:
 # Block Path:  ['html', 'p']
 # Is Leaf:  True
 
-ckpt_path = "zstanjj/HTML-Pruner-Llama-1B"
+# ckpt_path = "/processing_data/biz/jiejuntan/huggingface/HTML-Pruner-Phi-3.8B"
+ckpt_path = "/processing_data/biz/jiejuntan/huggingface/HTML-Pruner-Llama-1B"
 if torch.cuda.is_available():
-    device="cuda"
+    device = "cuda"
 else:
-    device="cpu"
-gen_embed_pruner = GenHTMLPruner(gen_model=ckpt_path, max_node_words=MAX_NODE_WORDS_GEN, device=device)
-block_rankings = gen_embed_pruner.calculate_block_rankings(question, pruned_html)
+    device = "cpu"
+gen_html_pruner = GenHTMLPruner(gen_model=ckpt_path, max_node_words=MAX_NODE_WORDS_GEN, device=device)
+block_rankings = gen_html_pruner.calculate_block_rankings(question, pruned_html, block_tree)
 print(block_rankings)
 
 # [1, 0]
 
-pruned_html = gen_embed_pruner.prune_HTML(pruned_html, block_tree, block_rankings, chat_tokenizer, MAX_CONTEXT_WINDOW_GEN)
+pruned_html = gen_html_pruner.prune_HTML(pruned_html, block_tree, block_rankings, chat_tokenizer, MAX_CONTEXT_WINDOW_GEN)
 print(pruned_html)
 
 # <p>The Bellagio is a luxury hotel and casino located on the Las Vegas Strip in Paradise, Nevada. It was built in 1998.</p>

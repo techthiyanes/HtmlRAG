@@ -48,7 +48,7 @@ question = "When was the bellagio in las vegas built?"
 html = """
 <html>
 <head>
-<title>When was the bellagio in las vegas built?</title>
+<h1>Bellagio Hotel in Las</h1>
 </head>
 <body>
 <p class="class0">The Bellagio is a luxury hotel and casino located on the Las Vegas Strip in Paradise, Nevada. It was built in 1998.</p>
@@ -76,7 +76,7 @@ simplified_html = clean_html(html)
 print(simplified_html)
 
 # <html>
-# <title>When was the bellagio in las vegas built?</title>
+# <h1>Bellagio Hotel in Las</h1>
 # <p>The Bellagio is a luxury hotel and casino located on the Las Vegas Strip in Paradise, Nevada. It was built in 1998.</p>
 # <div>
 # <p>Some other text</p>
@@ -118,7 +118,7 @@ for block in block_tree:
     print("Is Leaf: ", block[2])
     print("")
 
-# Block Content:  <title>When was the bellagio in las vegas built?</title>
+# Block Content:  <h1>Bellagio Hotel in Las</h1>
 # Block Path:  ['html', 'title']
 # Is Leaf:  True
 # 
@@ -139,7 +139,7 @@ for block in block_tree:
 ```python
 from htmlrag import EmbedHTMLPruner
 
-embed_model = "/train_data_load/huggingface/tjj_hf/bge-large-en/"
+embed_model = "BAAI/bge-large-en"
 query_instruction_for_retrieval = "Instruct: Given a web search query, retrieve relevant passages that answer the query\nQuery: "
 embed_html_pruner = EmbedHTMLPruner(embed_model=embed_model, local_inference=True, query_instruction_for_retrieval = query_instruction_for_retrieval)
 # alternatively you can init a remote TEI model, refer to https://github.com/huggingface/text-embeddings-inference.
@@ -148,7 +148,7 @@ embed_html_pruner = EmbedHTMLPruner(embed_model=embed_model, local_inference=Tru
 block_rankings=embed_html_pruner.calculate_block_rankings(question, simplified_html, block_tree)
 print(block_rankings)
 
-# [0, 2, 1]
+# [2, 0, 1]
 
 #. alternatively you can use bm25 to rank the blocks
 from htmlrag import BM25HTMLPruner
@@ -156,7 +156,7 @@ bm25_html_pruner = BM25HTMLPruner()
 block_rankings = bm25_html_pruner.calculate_block_rankings(question, simplified_html, block_tree)
 print(block_rankings)
 
-# [0, 2, 1]
+# [2, 0, 1]
 
 from transformers import AutoTokenizer
 
@@ -166,7 +166,7 @@ pruned_html = embed_html_pruner.prune_HTML(simplified_html, block_tree, block_ra
 print(pruned_html)
 
 # <html>
-# <title>When was the bellagio in las vegas built?</title>
+# <h1>Bellagio Hotel in Las</h1>
 # <p>The Bellagio is a luxury hotel and casino located on the Las Vegas Strip in Paradise, Nevada. It was built in 1998.</p>
 # </html>
 ```
@@ -187,7 +187,7 @@ for block in block_tree:
     print("Is Leaf: ", block[2])
     print("")
     
-# Block Content:  <title>When was the bellagio in las vegas built?</title>
+# Block Content:  <h1>Bellagio Hotel in Las</h1>
 # Block Path:  ['html', 'title']
 # Is Leaf:  True
 # 
