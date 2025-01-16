@@ -64,6 +64,7 @@ An example of using HtmlRAG in your own RAG systems:
 ```shell
 python run_htmlrag_pipeline.py \
     --html_file "./html_data/example/Washington Post.html" \
+    --question "What are the main policies or bills that Biden touted besides the American Rescue Plan?" \
     --lang en \
     --embed_model "BAAI/bge-large-en" \
     --gen_model "zstanjj/HTML-Pruner-Phi-3.8B" \
