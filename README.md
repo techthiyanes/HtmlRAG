@@ -20,6 +20,7 @@
 - [Citation](#-citation)
 
 ## ✨ Latest News
+- [01/21/2025]: 🎉Our paper has been accepted by WWW 2025.
 - [12/20/2024]: Add Chinese toolkit user guide in [toolkit/README_zh.md](toolkit/README_zh.md). 添加中文工具包使用指南。
 - [12/12/2024]: The latest version of htmlrag package is v0.0.5, which now supports Chinese HTML documents. You can install it by running `pip install htmlrag==0.0.5`.
 - [11/12/2024]: Our data and model are now available on ModelScope. You can access them [here](https://www.modelscope.cn/collections/HtmlRAG-c290f7cf673648) for faster downloading.
