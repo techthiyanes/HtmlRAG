@@ -6,6 +6,7 @@
 <a href="https://www.modelscope.cn/collections/HtmlRAG-c290f7cf673648" target="_blank"><img src=https://custom-icon-badges.demolab.com/badge/ModelScope%20Models-624aff?style=flat&logo=modelscope&logoColor=white></a>
 <a href="https://github.com/plageon/HtmlRAG/blob/main/toolkit/LICENSE"><img alt="License" src="https://img.shields.io/badge/LICENSE-MIT-green"></a>
 <a><img alt="Static Badge" src="https://img.shields.io/badge/made_with-Python-blue"></a>
+<img alt="PyPI - Version" src="https://img.shields.io/pypi/v/htmlrag">
 <p>
 <a href="https://github.com/plageon/HtmlRAG#-quick-start">Quick Start (快速开始)</a>&nbsp ｜ &nbsp<a href="toolkit/README_zh.md">中文文档</a>&nbsp ｜ &nbsp<a href="toolkit/README.md">English Documentation</a>&nbsp
 </p>
@@ -46,11 +47,14 @@ We propose HtmlRAG, which uses HTML instead of plain text as the format of exter
 
 ## 🔌 Apply HtmlRAG in your own RAG systems
 
-We provide a simple tookit to apply HtmlRAG in your own RAG systems.
+We provide a simple tookit to apply HtmlRAG in your own RAG systems. 
+
+![PyPI - Version](https://img.shields.io/pypi/v/htmlrag) ![PyPI - Downloads](https://img.shields.io/pypi/dw/htmlrag) ![PyPI - Downloads](https://img.shields.io/pypi/dm/htmlrag)
 
 ### 📦 Installation
 
 Install the package using pip:
+
 ```bash
 pip install htmlrag
 ```
