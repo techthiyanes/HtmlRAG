@@ -79,6 +79,8 @@ python run_htmlrag_pipeline.py \
     --max_node_words_gen 128 \
     --max_context_window_gen 2048
 ```
+If you only want to clean the HTML content, keep the main body and clean up irrelevant content such as advertisements, you can directly set the question as the web page title.
+
 Please refer to the [Documentation](toolkit/README.md) for more details.
 
 一个简单的例子，如何在自己的RAG系统中使用HtmlRAG：
@@ -95,6 +97,8 @@ python html4rag/run_htmlrag_pipeline.py \
     --max_node_words_gen 128 \
     --max_context_window_gen 2048
 ```
+如果你只想清洗HTML内容，保留主体清洗广告等无关内容，可以直接把question设置成网页标题。
+
 请访问[中文文档](toolkit/README_zh.md)了解更多细节。
 
 If you are interested in reproducing the results in the paper, please follow the instructions below.
